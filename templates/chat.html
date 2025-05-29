@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roambee AI Assistant</title>
-    <link rel="stylesheet" href="/static/css/chat.css">
+    <link rel="stylesheet" href="../static/css/chat.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Markdown parser -->
@@ -15,10 +15,6 @@
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="logo">
-                    <i class="fas fa-robot"></i>
-                    <span>Roambee AI Assistant</span>
-                </div>
                 <button class="new-chat-btn" onclick="startNewChat()">
                     <i class="fas fa-plus"></i>
                     <span>New Chat</span>
@@ -31,14 +27,7 @@
                         <i class="fas fa-message"></i>
                         <span>Current Chat</span>
                     </div>
-                    <div class="history-time">Now</div>
                 </div>
-            </div>
-            
-            <div class="sidebar-footer">
-                <button class="sidebar-btn" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </button>
             </div>
         </div>
 
@@ -48,7 +37,8 @@
                 <button class="mobile-menu-btn" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1>Roambee AI Assistant</h1>
+                <!-- <h1 style="padding-left: 2.5%;">Roambee AI Assistant</h1> -->
+                 <img src="../static/images/image.png" alt="Icon"  style="padding-left: 2.5%;" width="auto" height="36px"/>
                 <div class="header-controls">
                     <button class="control-btn" onclick="toggleTheme()" title="Toggle Theme">
                         <i class="fas fa-moon" id="themeIcon"></i>
@@ -61,29 +51,26 @@
 
             <div class="chat-container" id="chatContainer">
                 <div class="welcome-message">
-                    <div class="welcome-icon">
-                        <i class="fas fa-robot"></i>
-                    </div>
+                    <img src="../static/images/roambee-logo-bee.svg" alt="Icon" width="auto" height="60px"/>
                     <h2>Welcome to Roambee AI Assistant</h2>
-                    <p>How can I help you today?</p>
                 </div>
             </div>
 
             <div class="input-container">
                 <form class="message-form" id="messageForm">
+                    <div class="input-footer">
+                        <span class="char-count">0 / 4000</span>
+                    </div>
                     <div class="input-wrapper">
                         <textarea 
                             id="messageInput" 
-                            placeholder="Ask me anything..." 
+                            placeholder="How can I help you today?" 
                             rows="1"
                             maxlength="4000"
                         ></textarea>
                         <button type="submit" class="send-btn" id="sendBtn">
                             <i class="fas fa-paper-plane"></i>
                         </button>
-                    </div>
-                    <div class="input-footer">
-                        <span class="char-count">0 / 4000</span>
                     </div>
                 </form>
             </div>
