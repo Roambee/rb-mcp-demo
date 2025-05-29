@@ -94,13 +94,11 @@ function startNewChat() {
 function clearCurrentChat() {
     chatHistory = [];
     const chatContainer = document.getElementById('chatContainer');
+    chatContainer.style.justifyContent = 'center';
     chatContainer.innerHTML = `
         <div class="welcome-message">
-            <div class="welcome-icon">
-                <i class="fas fa-robot"></i>
-            </div>
+            <img src="../static/images/roambee-logo-bee.svg" alt="Icon" width="auto" height="60px"/>
             <h2>Welcome to Roambee AI Assistant</h2>
-            <p>How can I help you today?</p>
         </div>
     `;
     
@@ -120,7 +118,6 @@ function selectChat(element) {
 
 function addChatToHistory(title, date) {
     const chatHistoryContainer = document.getElementById('chatHistory');
-    const timeStr = formatTime(date);
     
     const historyItem = document.createElement('div');
     historyItem.className = 'history-item active';
@@ -131,7 +128,6 @@ function addChatToHistory(title, date) {
             <i class="fas fa-message"></i>
             <span>${title}</span>
         </div>
-        <div class="history-time">${timeStr}</div>
     `;
     
     // Remove active class from other items
@@ -141,22 +137,6 @@ function addChatToHistory(title, date) {
     
     // Add new item at the top
     chatHistoryContainer.insertBefore(historyItem, chatHistoryContainer.firstChild);
-}
-
-function formatTime(date) {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    
-    if (seconds < 60) return 'Now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
-    
-    return date.toLocaleDateString();
 }
 
 // Message handling
@@ -281,14 +261,17 @@ function addMessageToChat(role, content) {
     const welcomeMessage = chatContainer.querySelector('.welcome-message');
     if (welcomeMessage) {
         welcomeMessage.remove();
+        chatContainer.style.justifyContent = 'flex-start';
+        chatContainer.style.flexWrap = 'wrap';
+        chatContainer.style.alignContent = 'space-around';
     }
     
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
     
-    const avatar = document.createElement('div');
-    avatar.className = 'message-avatar';
-    avatar.innerHTML = role === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+    // const avatar = document.createElement('div');
+    // avatar.className = 'message-avatar';
+    // avatar.innerHTML = role === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
     
     const messageContent = document.createElement('div');
     messageContent.className = 'message-content';
@@ -328,9 +311,9 @@ function addMessageToChat(role, content) {
     
     if (role === 'user') {
         messageDiv.appendChild(messageContent);
-        messageDiv.appendChild(avatar);
+        // messageDiv.appendChild(avatar);
     } else {
-        messageDiv.appendChild(avatar);
+        // messageDiv.appendChild(avatar);
         messageDiv.appendChild(messageContent);
     }
     
@@ -381,6 +364,9 @@ async function loadChatHistory() {
                 const welcomeMessage = chatContainer.querySelector('.welcome-message');
                 if (welcomeMessage) {
                     welcomeMessage.remove();
+                    chatContainer.style.justifyContent = 'flex-start';
+                    chatContainer.style.flexWrap = 'wrap';
+                    chatContainer.style.alignContent = 'space-around';
                 }
                 
                 chatHistory.forEach(msg => {

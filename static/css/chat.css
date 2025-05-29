@@ -1,17 +1,18 @@
 :root {
     /* Light theme variables */
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8f9fa;
+    --bg-primary: #EFF9FB; 
+    --bg-secondary: #DEF3F8;
     --bg-tertiary: #e9ecef;
+
     --text-primary: #212529;
     --text-secondary: #6c757d;
+
     --border-color: #dee2e6;
-    --accent-color: #667eea;
-    --accent-hover: #5a6fd8;
+    --accent-color: #137790;
     --sidebar-bg: #f8f9fa;
     --chat-bg: #ffffff;
-    --user-msg-bg: #667eea;
-    --assistant-msg-bg: #f1f3f4;
+    --user-msg-bg: #DEF3F8;
+    --assistant-msg-bg: #EFF9FB;
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
@@ -41,7 +42,7 @@
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family:  "HK Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
     background: var(--bg-primary);
     color: var(--text-primary);
     height: 100vh;
@@ -55,15 +56,22 @@ body {
 }
 
 /* Sidebar Styles */
+
 .sidebar {
-    width: 280px;
+    position: fixed;       
+    top: 84px;             
+    left: 24px;            
+    bottom: 24px;          
+    width: 278px; 
+    height:913px;         
     background: var(--sidebar-bg);
-    border-right: 1px solid var(--border-color);
+    border-radius: 16px;    
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); 
+    border: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     transition: all 0.3s ease;
-    position: relative;
-    z-index: 100;
+    z-index: 100;        
 }
 
 .sidebar-header {
@@ -88,23 +96,24 @@ body {
 
 .new-chat-btn {
     width: 100%;
-    padding: 12px 16px;
+    padding: 8px 12px;
+    color: black;
     background: var(--accent-color);
-    color: white;
     border: none;
-    border-radius: 8px;
-    font-size: 14px;
+    border-radius: 6px;
+    font-size: 16px;
     font-weight: 500;
     cursor: pointer;
+    letter-spacing: 0.16px;
     display: flex;
+    justify-content: center;
     align-items: center;
     gap: 8px;
     transition: all 0.2s ease;
 }
 
 .new-chat-btn:hover {
-    background: var(--accent-hover);
-    transform: translateY(-1px);
+    background: #99D3E2;
 }
 
 .chat-history {
@@ -122,6 +131,11 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    color: var(--Text-Dark-Primary, #100F16);
+    font-family: "HK Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
 }
 
 .history-item:hover {
@@ -129,8 +143,8 @@ body {
 }
 
 .history-item.active {
-    background: var(--accent-color);
-    color: white;
+    background: var(--bg-secondary);
+    border: 1px solid #137790;
 }
 
 .history-content {
@@ -165,7 +179,6 @@ body {
     border-radius: 8px;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
 }
 
 .sidebar-btn:hover {
@@ -183,7 +196,6 @@ body {
 
 .chat-header {
     padding: 20px 24px;
-    border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -235,18 +247,22 @@ body {
 }
 
 .chat-container {
+    background: var(--bg-primary);
     flex: 1;
     padding: 24px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 20px;
+    padding-left: 310px;
+    justify-content: center;
 }
 
 .welcome-message {
     text-align: center;
     padding: 60px 20px;
     color: var(--text-secondary);
+    padding-bottom: 15%;
 }
 
 .welcome-icon {
@@ -289,6 +305,7 @@ body {
 
 .message.user {
     justify-content: flex-end;
+    width: 720px;
 }
 
 .message-avatar {
@@ -300,6 +317,7 @@ body {
     justify-content: center;
     font-size: 14px;
     flex-shrink: 0;
+    width: 720px;
 }
 
 .message.user .message-avatar {
@@ -323,36 +341,44 @@ body {
 
 .message.user .message-content {
     background: var(--user-msg-bg);
-    color: white;
+    color: #171717;
+    text-align: right;
+    font-family: "HK Grotesk";
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
     border-bottom-right-radius: 6px;
+    border: 1px solid #137790;
 }
 
 .message.assistant .message-content {
     background: var(--assistant-msg-bg);
     color: var(--text-primary);
-    border: 1px solid var(--border-color);
+    border: none;
     border-bottom-left-radius: 6px;
 }
 
 .input-container {
     padding: 24px;
+    padding-left: 310px;
     background: var(--bg-primary);
-    border-top: 1px solid var(--border-color);
 }
 
 .message-form {
-    max-width: 800px;
+    max-width: 720px;
     margin: 0 auto;
+    padding-bottom: 25px;
 }
 
 .input-wrapper {
     display: flex;
-    gap: 12px;
-    align-items: flex-end;
-    background: var(--bg-secondary);
-    border: 2px solid var(--border-color);
-    border-radius: 16px;
-    padding: 12px 16px;
+    gap: 10px;
+    align-items: center;
+    align-self: stretch;
+    background: var(--Neutral-N000, #FFF);
+    border: 1px solid var(--Neutral-N300, #D5D4DC);
+    border-radius: 8px;
+    padding: 8px 12px;
     transition: border-color 0.2s ease;
 }
 
@@ -361,17 +387,18 @@ body {
 }
 
 .input-wrapper textarea {
+    color: #171717;
     flex: 1;
     background: transparent;
     border: none;
     outline: none;
     resize: none;
-    font-family: inherit;
+    font-family: "HK Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
     font-size: 16px;
-    color: var(--text-primary);
+    font-style: normal;
+    font-weight: 400;
     min-height: 24px;
     max-height: 120px;
-    line-height: 1.5;
 }
 
 .input-wrapper textarea::placeholder {
@@ -379,35 +406,31 @@ body {
 }
 
 .send-btn {
-    padding: 8px;
-    background: var(--accent-color);
-    border: none;
-    border-radius: 8px;
-    color: white;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 16px;
-    width: 40px;
-    height: 40px;
     display: flex;
-    align-items: center;
+    width: 24px;
+    height: 24px;
     justify-content: center;
+    align-items: center;
+    border-radius: 6px;
+    background: #333;
+    box-shadow: 0px 2px 5px 0px rgba(20, 88, 201, 0.17);
+    color: white;
 }
 
-.send-btn:hover:not(:disabled) {
-    background: var(--accent-hover);
-    transform: translateY(-1px);
+.sendBtn:active:not(:disabled) {
+    background-color: #4d4d4d;
 }
 
 .send-btn:disabled {
-    opacity: 0.5;
+    opacity: 0.1;
     cursor: not-allowed;
 }
 
 .input-footer {
     display: flex;
     justify-content: flex-end;
-    margin-top: 8px;
+    margin-bottom: 8px;
+    margin-right: 8px;
 }
 
 .char-count {
@@ -507,17 +530,23 @@ body {
 
 .theme-btn {
     flex: 1;
-    padding: 12px 16px;
-    background: var(--bg-secondary);
+    padding: 4px;
+    background: var(--bg-primary);
     border: 2px solid var(--border-color);
-    border-radius: 8px;
-    color: var(--text-primary);
+    border-radius: 6px;
+
+    color: var(--Text-Dark-Primary, #100F16);
+
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    align-self: stretch;
+
+    font-size: 14px;
+    font-style: normal;
     font-weight: 500;
 }
 
@@ -527,7 +556,7 @@ body {
 }
 
 .theme-btn.active {
-    background: var(--accent-color);
+    background: var(--bg-primary);
     border-color: var(--accent-color);
     color: white;
 }
@@ -711,7 +740,7 @@ body {
     color: var(--text-primary);
     padding: 2px 6px;
     border-radius: 4px;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-family:  "HK Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
     font-size: 0.9em;
 }
 
