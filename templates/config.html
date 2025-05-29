@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roambee AI Assistant</title>
+    <link rel="stylesheet" href="/static/css/config.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="config-card">
+            <div class="header">
+                <div class="logo">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h1>Welcome to Roambee App</h1>
+                <p>Configure your API keys to get started</p>
+            </div>
+
+            <form id="configForm" class="config-form">
+                <div class="form-group">
+                    <label for="openai_key">
+                        <i class="fab fa-openai"></i>
+                        OpenAI API Key
+                    </label>
+                    <input 
+                        type="password" 
+                        id="openai_key" 
+                        name="openai_key" 
+                        placeholder="sk-..." 
+                        required
+                    >
+                    <span class="toggle-password" onclick="togglePassword('openai_key')">
+                        <i class="fas fa-eye"></i>
+                    </span>
+                </div>
+
+                <div class="form-group">
+                    <label for="roambee_key">
+                        <i class="fas fa-key"></i>
+                        Roambee API Key
+                    </label>
+                    <input 
+                        type="password" 
+                        id="roambee_key" 
+                        name="roambee_key" 
+                        placeholder="Enter your Roambee API key" 
+                        required
+                    >
+                    <span class="toggle-password" onclick="togglePassword('roambee_key')">
+                        <i class="fas fa-eye"></i>
+                    </span>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn btn-secondary" onclick="clearForm()">
+                        <i class="fas fa-eraser"></i>
+                        Clear
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-arrow-right"></i>
+                        Proceed
+                    </button>
+                </div>
+            </form>
+
+            <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Validating API keys...</p>
+            </div>
+
+            <div class="error-message" id="errorMessage" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="errorText"></span>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/config.js"></script>
+</body>
+</html> 
