@@ -37,11 +37,9 @@ function updateHeaderLogo() {
     if (!logo) return;
 
     if (currentTheme === 'dark') {
-        logo.style.padding = "0px";
-        logo.src = '../static/images/logo_white_50.png';
+        logo.src = '../static/images/roambee-logo-blackbg.svg';
     } else {
-        logo.style.paddingLeft = "2.5%";
-        logo.src = '../static/images/image.png';
+        logo.src = '../static/images/roambee-logo-whitebg.svg';
     }
 }
 
@@ -209,7 +207,7 @@ function updateCharCount() {
     } else if (length > 3500) {
         charCount.style.color = '#d69e2e';
     } else {
-        charCount.style.color = 'var(--text-secondary)';
+        charCount.style.color = 'var(--text-primary)';
     }
 }
 

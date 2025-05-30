@@ -271,6 +271,10 @@ body {
     flex: 1;
     padding: 2%;
     overflow-y: auto;
+    flex-wrap: wrap;
+    margin: 0 auto;            /* Horizontally center */
+    max-width: 800px;
+    width: 100%;  
     display: flex;
     gap: 20px;
     justify-content: center;
@@ -306,6 +310,7 @@ body {
     display: flex;
     gap: 12px;
     max-width: 100%;
+    flex: 1 1 60%;         
     animation: slideIn 0.3s ease-out;
 }
 
@@ -322,7 +327,6 @@ body {
 
 .message.user {
     justify-content: flex-end;
-    width: 720px;
 }
 
 .message-avatar {
@@ -349,7 +353,6 @@ body {
 }
 
 .message-content {
-    max-width: 70%;
     padding: 16px 20px;
     border-radius: 18px;
     line-height: 1.5;
@@ -652,7 +655,7 @@ body {
 }
 
 .loading-spinner p {
-    color: var(--text-secondary);
+    color: var(--text-primary);
     font-weight: 500;
 }
 
