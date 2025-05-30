@@ -107,6 +107,7 @@ function clearCurrentChat() {
     chatHistory = [];
     const chatContainer = document.getElementById('chatContainer');
     chatContainer.style.justifyContent = 'center';
+    chatContainer.style.alignContent = 'center';
     chatContainer.innerHTML = `
         <div class="welcome-message">
             <img src="../static/images/roambee-logo-bee.svg" alt="Icon" width="auto" height="60px"/>
@@ -273,6 +274,7 @@ function addMessageToChat(role, content) {
     const welcomeMessage = chatContainer.querySelector('.welcome-message');
     if (welcomeMessage) {
         welcomeMessage.remove();
+        chatContainer.style.alignContent = 'flex-start';
         chatContainer.style.flexWrap = 'wrap';
     }
     
@@ -374,6 +376,7 @@ async function loadChatHistory() {
                 const welcomeMessage = chatContainer.querySelector('.welcome-message');
                 if (welcomeMessage) {
                     welcomeMessage.remove();
+                     chatContainer.style.alignContent = 'flex-start';
                     chatContainer.style.flexWrap = 'wrap';
                 }
                 
