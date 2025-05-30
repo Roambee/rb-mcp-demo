@@ -156,7 +156,7 @@ body {
 
 .history-item.active {
     background: var(--bg-secondary);
-    border: 1px solid --accent-color;
+    border: 1px solid var(--accent-color);
 }
 
 .history-content {

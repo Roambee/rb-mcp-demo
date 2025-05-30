@@ -260,7 +260,7 @@ async function handleMessageSubmit(e) {
         
     } catch (error) {
         console.error('Error sending message:', error);
-        addMessageToChat('assistant', "Here are the shipment alerts for the shipment with UUID e2666ba2-e3b3-4517-97b8-da2a058f0c71:\nAlert UUID: 8df13eb5-4779-432f-9cb9-eb0846eabf94\nEvent: SHIPMENTSTART\nReported on: (Timestamp) 1737374401\nSeverity: INFO\nShort Message: Shipment has started.\nOrigin: 10 Sunview Drive\nDestination: Jersey City\nScheduled Arrival: 1747253340000\nScheduled Departure: 1733904540000\nAlert UUID: 5e07d706-f7a5-48fd-b175-30be07ec6fa6\nEvent: EMPTY_CONTAINER_PICKUP\nReported on: (Timestamp) 1735902420\nSeverity: INFO\nShort Message: Empty container has been picked up\nLocation: Via Al Molo Giano snc, 16128 Genova GE, Italy\nAlert UUID: 6545ce07-5514-4339-8f59-3d9749b9cdfb\nEvent: UNCLASSIFIED_POL\nReported on: (Timestamp) 1735902420\nSeverity: INFO\nAlert UUID: 0e5501ad-ed7a-451e-8c20-8732c631e4a4\nEvent: ETA\nReported on: 1747134747\nSeverity: INFO\nShort Message: Initial ETA\nPredicted Destination Arrival: Tokyo via vessel \"NAGOYA TOWER\"\nAlert UUID: 54e3c343-152c-495d-acf0-dbe358b4e675\nEvent: SHIPMENTDONE\nReported on: (Timestamp) 1743114000\nSeverity: INFO\nShort Message: Shipment has reached its completion time\nFinal Destination: Jersey City\nThese alerts provide a timeline of the shipment's progress from start to completion.\n");
+        addMessageToChat('assistant', "Sorry, I encountered an error. Please try again.");
     } finally {
         hideLoading();
     }
