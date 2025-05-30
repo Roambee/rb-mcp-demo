@@ -649,6 +649,11 @@ body {
     margin: 0 auto 16px;
 }
 
+.input-wrapper textarea::placeholder {
+  color: var(--text-primary); /* Or any readable, softer color */
+  opacity: 0.5;  /* Ensure full opacity */
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
