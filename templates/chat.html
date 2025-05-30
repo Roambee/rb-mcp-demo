@@ -12,67 +12,69 @@
 </head>
 <body data-theme="light">
     <div class="app-container">
-        <!-- Sidebar -->
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <button class="new-chat-btn" onclick="startNewChat()">
-                    <i class="fas fa-plus"></i>
-                    <span>New Chat</span>
+        <div class="chat-header">
+            <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <img src="../static/images/image.png" alt="Icon" id="roambeeLogo"  style="padding-left: 2.5%;" width="auto" height="36px"/>
+            <div class="header-controls">
+                <button class="control-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon" id="themeIcon"></i>
                 </button>
-            </div>
-            
-            <div class="chat-history" id="chatHistory">
-                <div class="history-item active" onclick="selectChat(this)">
-                    <div class="history-content">
-                        <i class="fas fa-message"></i>
-                        <span>Current Chat</span>
-                    </div>
-                </div>
+                <button class="control-btn" onclick="showSettings()" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
             </div>
         </div>
 
-        <!-- Main Chat Area -->
-        <div class="main-content">
-            <div class="chat-header">
-                <button class="mobile-menu-btn" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <!-- <h1 style="padding-left: 2.5%;">Roambee AI Assistant</h1> -->
-                 <img src="../static/images/image.png" alt="Icon"  style="padding-left: 2.5%;" width="auto" height="36px"/>
-                <div class="header-controls">
-                    <button class="control-btn" onclick="toggleTheme()" title="Toggle Theme">
-                        <i class="fas fa-moon" id="themeIcon"></i>
-                    </button>
-                    <button class="control-btn" onclick="showSettings()" title="Settings">
-                        <i class="fas fa-cog"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="chat-container" id="chatContainer">
-                <div class="welcome-message">
-                    <img src="../static/images/roambee-logo-bee.svg" alt="Icon" width="auto" height="60px"/>
-                    <h2>Welcome to Roambee AI Assistant</h2>
-                </div>
-            </div>
-
-            <div class="input-container">
-                <form class="message-form" id="messageForm">
-                    <div class="input-footer">
-                        <span class="char-count">0 / 4000</span>
-                    </div>
-                    <div class="input-wrapper">
-                        <textarea 
-                            id="messageInput" 
-                            placeholder="How can I help you today?" 
-                            rows="1"
-                            maxlength="4000"
-                        ></textarea>
-                        <button type="submit" class="send-btn" id="sendBtn">
-                            <i class="fas fa-paper-plane"></i>
+        <div class="body-container">
+            <!-- Sidebar -->
+            <div class="sidebar-container">
+                <div class="sidebar" id="sidebar">
+                    <div class="sidebar-header">
+                        <button class="new-chat-btn" onclick="startNewChat()">
+                            <i class="fas fa-plus"></i>
+                            <span>New Chat</span>
                         </button>
                     </div>
-                </form>
+                    
+                    <div class="chat-history" id="chatHistory">
+                        <div class="history-item active" onclick="selectChat(this)">
+                            <div class="history-content">
+                                <i class="fas fa-message"></i>
+                                <span>Current Chat</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Main Chat Area -->
+            <div class="main-content">
+                <div class="chat-container" id="chatContainer">
+                    <div class="welcome-message">
+                        <img src="../static/images/roambee-logo-bee.svg" alt="Icon" width="auto" height="60px"/>
+                        <h2 style="margin-top: 3%;">Welcome to Roambee AI Assistant</h2>
+                    </div>
+                </div>
+                <div class="input-container">
+                    <form class="message-form" id="messageForm">
+                        <div class="input-wrapper">
+                            <textarea 
+                                id="messageInput" 
+                                placeholder="How can I help you today?" 
+                                rows="1"
+                                maxlength="4000"
+                            ></textarea>
+                            <button type="submit" class="send-btn" id="sendBtn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div class="input-footer">
+                            <span class="warning-text">RoambeeGPT can make mistakes. Try reframing the question.</span>
+                            <span class="char-count">0 / 4000</span>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
