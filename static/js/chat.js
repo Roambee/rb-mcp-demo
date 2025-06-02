@@ -16,6 +16,7 @@ function initializeTheme() {
     document.body.setAttribute('data-theme', currentTheme);
     updateThemeIcon();
     updateThemeButtons();
+    updateHeaderLogo();
 }
 
 function toggleTheme() {
@@ -49,16 +50,20 @@ function updateThemeIcon() {
 }
 
 function updateThemeButtons() {
-    document.querySelectorAll('.theme-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.theme === currentTheme);
-    });
+    const buttons = document.querySelectorAll('.theme-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+
+    if (currentTheme === 'light') {
+        document.querySelector(".theme-btn[onclick*='light']").classList.add('active');
+    } else{
+        document.querySelector(".theme-btn[onclick*='dark']").classList.add('active');
+    }
 }
 
 // Settings modal
 function showSettings() {
     const modal = document.getElementById('settingsModal');
     modal.classList.add('show');
-    updateThemeButtons();
 }
 
 function hideSettings() {
