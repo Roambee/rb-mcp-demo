@@ -306,7 +306,6 @@ body {
 
 .message {
     display: flex;
-    gap: 12px;
     max-width: 100%;
     flex: 1 1 60%;         
     animation: slideIn 0.3s ease-out;
@@ -647,6 +646,28 @@ body {
   opacity: 0.5;  /* Ensure full opacity */
 }
 
+.message.feedback-message {
+  display: flex;
+  justify-content: flex-start;
+  padding-left: 20px;
+  gap: 15px; 
+}
+
+.feedback-btn {
+  display: flex ; 
+  font-size: 24px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-radius:  0.5rem;
+  padding: 0.1rem;
+}
+
+.feedback-btn:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-color);
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -855,3 +876,23 @@ body {
         padding: 6px 8px;
     }
 } 
+.atlwdg-trigger.atlwdg-SUBTLE{
+    padding: 12px 16px  !important;
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-secondary)  !important;
+    border: none  !important;
+    border-radius: 6px  !important;
+    cursor: pointer  !important;
+    font-family: "HK Grotesk" !important;
+    font-style: normal !important; 
+    font-weight: 400 !important;
+}
+.close-btn {
+    background-color: #ccc;
+    margin-left: 10px;
+} 
+.assistant{
+    display: flex;
+    flex-direction: column;
+
+}

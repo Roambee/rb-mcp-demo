@@ -119,7 +119,11 @@ function clearCurrentChat() {
             <h2>Welcome to Roambee AI Assistant</h2>
         </div>
     `;
-    
+
+    const feedbackMessage = document.getElementById('feedbackMessage');
+    if (feedbackMessage) {
+        feedbackMessage.remove();
+    }
     // Add new chat to history sidebar
     addChatToHistory('New Chat', new Date());
 }
@@ -333,6 +337,11 @@ function addMessageToChat(role, content) {
         // messageDiv.appendChild(avatar);
         messageDiv.appendChild(messageContent);
     }
+
+    if (role === 'assistant') {
+        const feedbackMessage = createFeedbackMessage();
+        messageDiv.appendChild(feedbackMessage);
+    }
     
     chatContainer.appendChild(messageDiv);
     
@@ -340,6 +349,79 @@ function addMessageToChat(role, content) {
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
+function createFeedbackMessage() {
+    const feedbackDiv = document.createElement('div');
+    feedbackDiv.className = 'message feedback-message'; // use your CSS for .message and add .feedback-message for any extra styling
+
+    const thumbsUpBtn = document.createElement('button');
+    thumbsUpBtn.className = 'feedback-btn thumbs-up'; // add your CSS classes for buttons
+    thumbsUpBtn.title = 'Thumbs Up';
+    thumbsUpBtn.innerHTML = '<img src="../static/images/thumbs-up.svg" class="thumb" alt="Thumbs Up" width="24" height="24">';
+    // thumbsUpBtn.innerHTML = '<i class="fas fa-thumbs-up"  alt="Thumbs Down" width="24" height="24"></i>'
+
+    const thumbsDownBtn = document.createElement('button');
+    thumbsDownBtn.className = 'feedback-btn thumbs-down';
+    thumbsDownBtn.title = 'Thumbs Down';
+    thumbsDownBtn.innerHTML = '<img src="../static/images/thumbs-down.svg" alt="Thumbs Down" width="24" height="24">';
+    // thumbsDownBtn.innerHTML  = '<i class="fas fa-thumbs-down"  alt="Thumbs Down" width="24" height="24"></i>'
+
+
+    const handleFeedbackClick = async (e, feedbackType) => {
+        
+        const clickedBtn = e.currentTarget; // Ensures we get the button, even if an <img> was clicked
+        const otherBtn = clickedBtn === thumbsUpBtn ? thumbsDownBtn : thumbsUpBtn;
+
+        console.log(clickedBtn,otherBtn);
+
+        const img = clickedBtn.querySelector('img');
+        if (img) {
+            if (feedbackType === 'Thumbs Up') {
+                img.src = '../static/images/thumbs-up--filled.svg'; // active/selected thumbs up image
+            } else if (feedbackType === 'Thumbs Down') {
+                img.src = '../static/images/thumbs-down--filled.svg'; // active/selected thumbs down image
+            }
+        }
+
+        // Disable clicked button
+        clickedBtn.disabled = true;
+
+        // Remove the other button
+        if (otherBtn.parentNode) {
+            otherBtn.parentNode.removeChild(otherBtn);
+        }
+
+        const messageDiv = e.target.closest('.message.assistant');
+        if (!messageDiv) return;
+
+        const messageContentDiv = messageDiv.querySelector('.message-content');
+        if (!messageContentDiv) return;
+
+        const messageText = messageContentDiv.textContent || '';
+        const formData = new FormData();
+
+        formData.append('feedback', feedbackType);
+        formData.append('message', messageText);
+
+        try {
+            const res = await fetch('/send-feedback', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            console.log('Feedback sent:', data);
+        } catch (error) {
+            console.error('Error sending feedback:', error);
+        }
+    };
+
+    thumbsUpBtn.addEventListener('click', (e) => handleFeedbackClick(e, "Thumbs Up"));
+    thumbsDownBtn.addEventListener('click', (e) => handleFeedbackClick(e, "Thumbs Down"));
+
+  feedbackDiv.appendChild(thumbsUpBtn);
+  feedbackDiv.appendChild(thumbsDownBtn);
+
+  return feedbackDiv;
+}
 function updateChatTitle(firstMessage) {
     const activeHistoryItem = document.querySelector('.history-item.active');
     if (activeHistoryItem) {
