@@ -1,4 +1,4 @@
-# Roambee MCP Chatbot Client
+# Roambee MCP Demo
 
 <div align="center">
   
@@ -15,7 +15,7 @@
 
 ## 🤖 About
 
-The **Roambee MCP Chatbot Client** is an intelligent conversational interface that leverages the **Model Context Protocol (MCP)** to provide seamless access to Roambee's supply chain visibility tools and data. Built with FastAPI and modern web technologies, this chatbot enables users to interact with Roambee's platform through natural language conversations.
+The **Roambee MCP Demo** is an intelligent conversational interface that leverages the **Roambee MCP (Model Context Protocol) Server https://mcp-server.roambee.com/sse** to provide seamless access to Roambee's supply chain visibility tools and data. Built with FastAPI and modern web technologies, this MCP demo application enables users to interact with Roambee's platform through natural language conversations.
 
 ## ✨ Features
 
@@ -24,6 +24,8 @@ The **Roambee MCP Chatbot Client** is an intelligent conversational interface th
 - **Real-time Validation**: Live API key validation for both OpenAI and Roambee
 - **Session Management**: Secure session handling with automatic cleanup
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile
+- **Structured Logging**: Comprehensive logging with configurable levels
+- **Command Line Configuration**: Flexible host/port settings via CLI arguments
 
 ### 🔧 **MCP Integration**
 - **Server-Sent Events (SSE)**: Real-time connection to Roambee MCP server
@@ -39,38 +41,46 @@ The **Roambee MCP Chatbot Client** is an intelligent conversational interface th
 
 ## 📋 Prerequisites
 
-- **Python 3.8+**
+- **Python 3.8+** or **Docker**
 - **OpenAI API Key** - [Get yours here](https://platform.openai.com/api-keys)
 - **Roambee API Key** - Contact [Roambee Sales](https://roambee.com/contact-us/)
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repository
+### Option 1: Docker (Recommended)
+
+#### Using Docker directly
+```bash
+# Build the image
+docker build -t roambee-mcp-chatbot .
+
+# Run with custom settings and debug logging
+docker run -p 3000:3000 \
+  -v $(pwd)/logs:/app/logs \
+  roambee-mcp-chatbot \
+  --host 0.0.0.0 --port 3000 --log-level DEBUG
+```
+
+### Option 2: Local Python Installation
+
+#### 1. Clone the Repository
 ```bash
 git clone https://github.com/roambee/rb-mcp-demo.git
 cd rb-mcp-demo
 ```
 
-### 2. Install Dependencies
+#### 2. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure Environment (Optional)
-Create a `.env` file in the project root:
-```env
-HOST=localhost
-PORT=4444
-SECRET_KEY=your-secret-key-for-sessions
-```
-
-### 4. Start the Server
+#### 3. Start the Server
 ```bash
-python main.py
+python main.py --host 0.0.0.0 --port 3000 --log-level DEBUG
 ```
 
-### 5. Access the Application
-Open your browser and navigate to: **http://localhost:4444**
+### 4. Access the Application
+Open your browser and navigate to: **http://localhost:3000** (or your custom port)
 
 ## 🔐 API Key Configuration
 
@@ -81,61 +91,18 @@ Open your browser and navigate to: **http://localhost:4444**
 4. **Click Proceed** - both keys will be validated in real-time
 5. **Start Chatting** - you'll be redirected to the chat interface
 
-## 💬 Usage Examples
-
-### Basic Queries
-```
-User: "What is my current inventory status?"
-Bot: [Uses Roambee MCP tools to fetch real inventory data]
-
-User: "Show me shipments delayed by more than 2 days"
-Bot: [Queries Roambee API through MCP tools]
-
-User: "Explain supply chain visibility best practices"
-Bot: [Uses OpenAI when no specific Roambee tool is needed]
-```
-
 ## 🏗️ Architecture
 
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   FastAPI        │    │   External APIs │
-│   (Chat UI)     │◄──►│   Backend        │◄──►│                 │
-│                 │    │                  │    │  • OpenAI API   │
-│  • React-like   │    │  • Session Mgmt  │    │  • Roambee API  │
-│  • Responsive   │    │  • MCP Client    │    │  • MCP Server   │
-│  • Themes       │    │  • AutoGen       │    │                 │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
+┌─────────────────┐    ┌──────────────────┐    ┌───────────────────────┐
+│   Frontend      │    │   FastAPI        │    │   External APIs       │
+│   (Chat UI)     │◄──►│   Backend        │◄──►│                       │
+│                 │    │                  │    │  • OpenAI API         │
+│  • React-like   │    │  • Session Mgmt  │    │  • Roambee API        │
+│  • Responsive   │    │  • MCP Client    │    │  • Roambee MCP Server │
+│  • Themes       │    │  • AutoGen       │    │                       │
+└─────────────────┘    └──────────────────┘    └───────────────────────┘
 ```
-
-## 📁 Project Structure
-
-```
-rb-mcp-demo/
-├── main.py                 # FastAPI application entry point
-├── requirements.txt        # Python dependencies
-├── README.md              # This file
-├── .env                   # Environment configuration (optional)
-├── templates/             # HTML templates
-│   ├── config.html        # API key configuration page
-│   └── chat.html          # Main chat interface
-└── static/               # Static assets
-    ├── css/              # Stylesheets
-    │   ├── config.css    # Configuration page styles
-    │   └── chat.css      # Chat interface styles
-    └── js/               # JavaScript files
-        ├── config.js     # Configuration page logic
-        └── chat.js       # Chat interface logic
-```
-
-## 🔧 Configuration Options
-
-### Environment Variables
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `HOST` | `localhost` | Server host address |
-| `PORT` | `4444` | Server port number |
-| `SECRET_KEY` | Auto-generated | Session encryption key |
 
 ## 🔍 Troubleshooting
 
@@ -146,28 +113,30 @@ rb-mcp-demo/
 - Confirm your Roambee API key is active
 - Check network connectivity
 
-**Q: MCP connection fails**
-- Ensure Roambee API key has MCP access permissions
-- Verify the MCP server URL is accessible
-- Check firewall/proxy settings
-
 **Q: Chat responses are slow**
 - OpenAI API might be experiencing high load
 - MCP server tools may have longer processing times
 - Check your internet connection stability
 
+**Q: Docker container won't start**
+- Ensure Docker is running
+- Check if port 3000 is already in use: `lsof -i :3000`
+- Verify Docker has sufficient resources allocated
+
+**Q: Port conflicts when running multiple containers**
+- Use different external ports: `docker run -p 8080:8080` vs `docker run -p 9000:9000`
+- Check what ports are in use: `docker ps` or `lsof -i :PORT`
+- Update both the `-p` flag and `--port` argument to match
+
+**Q: Can't access application from outside Docker host**
+- Use `--host 0.0.0.0` instead of `localhost` or `127.0.0.1`
+- Ensure firewall allows the specified port
+- Check Docker port mapping: `-p HOST_PORT:CONTAINER_PORT`
+
 ### Getting Help
-- **Documentation**: [Roambee Developer Portal](https://developers.roambee.com)
 - **Support**: [support@roambee.com](mailto:support@roambee.com)
 - **Community**: [Roambee LinkedIn Group](https://www.linkedin.com/company/roambee/)
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🤝 Contributing
-
-We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting pull requests.
+- **Endpoint**: `http://localhost:3000/docs`
 
 ## 📞 Contact & Support
 
@@ -178,12 +147,12 @@ We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING
 [![Website](https://img.shields.io/badge/🌐_Website-roambee.com-blue?style=for-the-badge)](https://roambee.com)
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/company/roambee/)
-[![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/roambee)
+[![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/roam_bee)
 [![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/c/roambee)
 
-**📧 Email**: [info@roambee.com](mailto:info@roambee.com)  
-**📞 Phone**: +1 (408) 933-3303  
-**📍 Address**: Santa Clara, CA, USA
+**📧 Email**: [info@roambee.com](mailto:support@roambee.com)  
+**📞 Phone**: +1 (408) 663 6655
+**📍 Address**: 3120 De La Cruz Blvd Suite 210 Santa Clara, California 95054, USA
 
 </div>
 

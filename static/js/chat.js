@@ -116,7 +116,7 @@ function clearCurrentChat() {
     chatContainer.innerHTML = `
         <div class="welcome-message">
             <img src="../static/images/roambee-logo-bee.svg" alt="Icon" width="auto" height="60px"/>
-            <h2>Welcome to Roambee AI Assistant</h2>
+            <h2>Welcome to Roambee MCP Demo</h2>
         </div>
     `;
 
