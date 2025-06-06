@@ -1,0 +1,15 @@
+fastapi==0.115.0
+uvicorn==0.32.0
+python-multipart==0.0.12
+jinja2==3.1.4
+aiofiles==24.1.0
+starlette==0.38.6
+httpx==0.27.2
+itsdangerous==2.2.0
+contextvars==2.4.0
+autogen_agentchat==0.5.5
+autogen_core==0.5.5
+autogen_ext==0.5.5
+mcp==1.8.1
+openai==1.82.0
+tiktoken==0.9.0

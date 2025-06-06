@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roambee MCP Demo</title>
+    <link rel="stylesheet" href="/static/css/config.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="blur-box">
+            <div class="ellipse8"></div>
+            <div class="ellipse9"></div>
+            <div class="ellipse10"></div>
+            <div class="ellipse11"></div>
+        </div>
+
+        <div class="config-card">
+            <div class="header">
+                <div class="logo">
+                    <img src="../static/images/roambee-logo-whitebg.svg" alt="Icon" width="auto" height="100%"/>
+                </div>
+                
+                
+            </div>
+
+            <form id="configForm" class="config-form">
+                <div>
+                    <h1>Welcome to Roambee MCP Demo</h1>
+                    <p>Configure your API keys to get started</p>
+                </div>
+                <div class="form-group">
+                    <label for="openai_key">
+                        OpenAI API Key
+                        <span class="info-icon">
+                            <img src="../static/images/warning--alt.svg" alt="Download Disclaimer" class="icon-img" width="auto" height="20px"/>
+                            <span class="tooltip-text">
+                                <strong>Disclaimer:</strong> Your OepnAI API key is stored locally in your browser and is never transmitted to Roambee or any third parties. Roambee does not store or access your key and is not liable for its security. By entering your OpenAI API key and clicking "Proceed," you acknowledge and accept full responsibility for its use and agree to our terms and conditions.
+                            </span>
+                        </span>
+                    </label>
+                    <div>
+                        <input 
+                            type="password" 
+                            id="openai_key" 
+                            name="openai_key" 
+                            placeholder="sk-..." 
+                            required
+                        >
+                        <span class="toggle-password" onclick="togglePassword('openai_key')">
+                            <i class="fas fa-eye"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="roambee_key">
+                        <img src="../static/images/api--key.svg" alt="Icon" width="auto" height="10%" class="fas"/>
+                        Roambee API Key
+                    </label>
+                    <div>
+                        <input 
+                            type="password" 
+                            id="roambee_key" 
+                            name="roambee_key" 
+                            placeholder="Enter your Roambee API key" 
+                            required
+                        >
+                        <span class="toggle-password" onclick="togglePassword('roambee_key')">
+                            <i class="fas fa-eye"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn btn-secondary" onclick="clearForm()">
+                        <i class="fas fa-eraser"></i>
+                        Clear
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-arrow-right"></i>
+                        Proceed
+                    </button>
+                </div>
+            </form>
+
+            <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Validating API keys...</p>
+            </div>
+
+            <div class="error-message" id="errorMessage" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="errorText"></span>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/config.js"></script>
+</body>
+</html> 

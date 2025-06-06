@@ -1,0 +1,324 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "HK Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    /* background: linear-gradient(135deg, #ba0b3a 0%, #764ba2 100%); */
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.container {
+    position: relative;
+    width: 100%;
+    max-width: 450px;
+}
+
+.config-card {
+    background: rgba(255, 255, 255, 0.95);
+    gap: 32px;
+    border-radius: 12px;
+    padding: 60px 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo {
+    display: inline-block;
+    height: 60px;
+    /* height: 80px;
+    background: linear-gradient(135deg, #ba0b3a, #764ba2);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); */
+}
+
+.config-form h1 {
+    color: #100F16;
+    font-size: 22px;
+    font-style: normal;
+    line-height: 150%;
+    text-align: center;
+}
+
+.config-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.form-group {
+    position: relative;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 8px;
+}
+
+.form-group label i {
+    color: #171717;
+    font-family: "HK Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 160%;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px 12px;
+    padding-right: 50px;
+    border: 1px solid var(--Neutral-N300, #D5D4DC);
+    background: var(--White, #FFF);
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: "HK Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    font-weight: 400;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--Primary-Yellow-Bee-Y200, #FDB933);;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    bottom: 15%;
+    cursor: pointer;
+    color: #a0aec0;
+    transition: color 0.3s ease;
+}
+
+.toggle-password:hover {
+    color: var(--Primary-Yellow-Bee-Y200, #FDB933);
+}
+
+.button-group {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: "HK Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    letter-spacing: 0.16px;
+    color: var(--Neutral-N900, #100F16);
+}
+
+.btn-primary {
+    background: var(--Primary-Yellow-Bee-Y200, #FDB933);
+}
+
+.btn-primary:hover {
+    background-color: rgb(255, 228, 173);
+}
+
+
+.btn-secondary {
+    background: var(--Neutral-N200, #E8E7ED);
+}
+
+.btn-secondary:hover {
+    background-color: rgb(197,201,202);
+}
+
+.loading {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e2e8f0;
+    border-top: 4px solid var(--Primary-Yellow-Bee-Y200, #FDB933);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading p {
+    color: #718096;
+    font-weight: 500;
+}
+
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    background: #fed7d7;
+    border: 1px solid #feb2b2;
+    border-radius: 12px;
+    color: #c53030;
+    font-weight: 500;
+    margin-top: 20px;
+}
+
+.error-message i {
+    font-size: 18px;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+    .config-card {
+        padding: 30px 20px;
+        margin: 10px;
+    }
+    
+    .header h1 {
+        font-size: 24px;
+    }
+    
+    .button-group {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+} 
+p {
+    color: #100F16;
+    text-align: center;
+    font-family: "HK Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 150%;
+}
+
+.blur-box {
+  width: 497px;
+  height: 615px;
+  filter: blur(150px);
+  position: absolute;
+  top: -1%;
+  left: -5%;
+  z-index: -1;
+}
+
+.ellipse8 {
+  width: 235px;
+  height: 235px;
+  background: #FEC048;
+  border-radius: 50%;
+  position: absolute;
+  z-index: 2;
+}
+
+.ellipse9 {
+  width: 343px;
+  height: 343px;
+  background: #8B74E7;
+  border-radius: 50%;
+  position: absolute;
+  top:-5%;
+  left: 35%;
+  z-index: 2;
+}
+
+.ellipse10 {
+  width: 321px;
+  height: 321px;
+  background: #45ABC4;
+  border-radius: 50%;
+  position: absolute;
+  top: 40%;
+  z-index: 2;
+}
+
+
+.ellipse11 {
+  width: 227px;
+  height: 227px;
+  background: #8B74E7;
+  border-radius: 50%;
+  position: absolute;
+  top: 67%;
+  left: 30%;
+  z-index: 2;
+}
+
+.info-icon {
+    position: relative;
+    display: inline-block;
+    color: #007bff;
+    cursor: pointer;
+}
+
+.tooltip-text {
+    visibility: hidden;
+    width: 300px;
+    background-color: #333;
+    color: #fff;
+    text-align: left;
+    padding: 8px 10px;
+    border-radius: 5px;
+    position: absolute;
+    z-index: 1;
+    top: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: normal;
+}
+
+.info-icon:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}

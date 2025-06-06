@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roambee MCP Demo</title>
+    <link rel="stylesheet" href="../static/css/chat.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Markdown parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="text/javascript" src="https://roambee.atlassian.net/s/d41d8cd98f00b204e9800998ecf8427e-T/-yl7qth/b/0/c95134bc67d3a521bb3f4331beb9b804/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?locale=en-US&collectorId=9ce8508a"></script>
+</head>
+<body data-theme="light">
+    <div class="app-container">
+        <div class="chat-header">
+            <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <img src="static/images/roambee-logo-whitebg.svg" alt="Icon" id="roambeeLogo"  style="padding-left: 2.5%;" width="auto" height="36px"/>
+            <div class="header-controls">
+                <button class="control-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+                <button class="control-btn" onclick="showSettings()" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="body-container">
+            <!-- Sidebar -->
+            <div class="sidebar-container">
+                <div class="sidebar" id="sidebar">
+                    <div class="sidebar-header">
+                        <button class="new-chat-btn" onclick="startNewChat()">
+                            <i class="fas fa-plus"></i>
+                            <span>New Chat</span>
+                        </button>
+                    </div>
+                    
+                    <div class="chat-history" id="chatHistory">
+                        <div class="history-item active" onclick="selectChat(this)">
+                            <div class="history-content">
+                                <i class="fas fa-message"></i>
+                                <span>Current Chat</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Main Chat Area -->
+            <div class="main-content">
+                    <div class="chat-container" id="chatContainer">
+                        <div class="welcome-message">
+                            <img src="../static/images/roambee-logo-bee.svg" alt="Icon" width="auto" height="60px"/>
+                            <h2 style="margin-top: 3%;">Welcome to Roambee MCP Demo</h2>
+                        </div>
+                    </div>
+                <div class="input-container">
+                    <form class="message-form" id="messageForm">
+                        <div class="input-wrapper">
+                            <textarea 
+                                id="messageInput" 
+                                placeholder="How can I help you today?" 
+                                rows="1"
+                                maxlength="4000"
+                            ></textarea>
+                            <button type="submit" class="send-btn" id="sendBtn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div class="input-footer">
+                            <span class="warning-text">ChatGPT can make mistakes. Try reframing the question.</span>
+                            <span class="char-count">0 / 4000</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Settings</h3>
+                <button class="close-btn" onclick="hideSettings()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label>Theme</label>
+                    <div class="theme-options">
+                        <button class="theme-btn" onclick="setTheme('light')">
+                            <i class="fas fa-sun"></i>
+                            Light
+                        </button>
+                        <button class="theme-btn" onclick="setTheme('dark')">
+                            <i class="fas fa-moon"></i>
+                            Dark
+                        </button>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <label>API Configuration</label>
+                    <button class="config-btn" onclick="goToConfig()">
+                        <i class="fas fa-key"></i>
+                        Update API Keys
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Generating response...</p>
+        </div>
+    </div>
+
+    <script src="/static/js/chat.js"></script>
+</body>
+</html> 
