@@ -147,7 +147,7 @@ async def chat_with_agent(message: str, openai_key: str, roambee_key: str):
     response = False
     try:
         mcp_tools = await validate_roambee_sse_connection(roambee_key)
-        model_client = OpenAIChatCompletionClient(model="gpt-4o", api_key=openai_key)
+        model_client = OpenAIChatCompletionClient(model="o4-mini-2025-04-16", api_key=openai_key)
         agent = AssistantAgent(
                 name="Roambee_MCP_Agent",
                 model_client=model_client,
@@ -289,7 +289,7 @@ async def get_ai_response(message: str, openai_key: str) -> str:
         )
 
         response = client.responses.create(
-            model="gpt-4o-mini",
+            model="o4-mini-2025-04-16",
             instructions="You are a helpful assistant",
             input=message,
         )
