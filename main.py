@@ -146,13 +146,18 @@ async def chat_with_agent(message: str, openai_key: str, roambee_key: str):
     """Chat with agent using MCP tools"""
     response = False
     try:
+
+        now = datetime.now()
+        day, month, year = now.day, now.strftime("%B"), now.year
         mcp_tools = await validate_roambee_sse_connection(roambee_key)
+        logger.info(f"\n\nToday's date is {day} {month} {year}")
         model_client = OpenAIChatCompletionClient(model="o4-mini-2025-04-16", api_key=openai_key)
         agent = AssistantAgent(
                 name="Roambee_MCP_Agent",
                 model_client=model_client,
                 tools=mcp_tools,
-                reflect_on_tool_use=True)
+                reflect_on_tool_use=True,
+                system_message=f"You are a helpful assistant. If you get dates or datetime in seconds or milliseconds then show always in human readable format. Today's date is {day} {month} {year}.")
 
         result = await agent.run(task=message, cancellation_token=CancellationToken())
         if result and result.messages:
