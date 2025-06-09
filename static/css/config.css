@@ -118,7 +118,7 @@ body {
 .toggle-password {
     position: absolute;
     right: 10px;
-    bottom: 15%;
+    bottom: 7%;
     cursor: pointer;
     color: #a0aec0;
     transition: color 0.3s ease;

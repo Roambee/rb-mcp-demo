@@ -2,15 +2,16 @@
 function togglePassword(fieldId) {
     const field = document.getElementById(fieldId);
     const toggle = field.nextElementSibling;
-    const icon = toggle.querySelector('i');
-    
+    const icon = toggle.querySelector('img');
+
     if (field.type === 'password') {
         field.type = 'text';
-        icon.className = 'fas fa-eye-slash';
+        icon.src = '../static/images/view--off.svg';
     } else {
         field.type = 'password';
-        icon.className = 'fas fa-eye';
+        icon.src = '../static/images/view-icon.svg';
     }
+
 }
 
 // Clear form
@@ -24,8 +25,8 @@ function clearForm() {
     document.getElementById('roambee_key').type = 'password';
     
     // Reset eye icons
-    document.querySelectorAll('.toggle-password i').forEach(icon => {
-        icon.className = 'fas fa-eye';
+    document.querySelectorAll('.toggle-password img').forEach(icon => {
+        icon.src = '../static/images/view-icon.svg';
     });
 }
 
