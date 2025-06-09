@@ -46,7 +46,7 @@ function updateHeaderLogo() {
 
 function updateThemeIcon() {
     const themeIcon = document.getElementById('themeIcon');
-    themeIcon.className = currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+    themeIcon.src = currentTheme === 'light' ? "../static/images/moon.svg" : "../static/images/sun.svg"; 
 }
 
 function updateThemeButtons() {
@@ -147,7 +147,7 @@ function addChatToHistory(title, date) {
     
     historyItem.innerHTML = `
         <div class="history-content">
-            <i class="fas fa-message"></i>
+            <img src="../static/images/chat.svg" alt="Message Icon" class="icon" width="20px" height="auto"/>
             <span>${title}</span>
         </div>
     `;
@@ -290,10 +290,6 @@ function addMessageToChat(role, content) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
     
-    // const avatar = document.createElement('div');
-    // avatar.className = 'message-avatar';
-    // avatar.innerHTML = role === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
-    
     const messageContent = document.createElement('div');
     messageContent.className = 'message-content';
     
@@ -357,14 +353,11 @@ function createFeedbackMessage() {
     thumbsUpBtn.className = 'feedback-btn thumbs-up'; // add your CSS classes for buttons
     thumbsUpBtn.title = 'Thumbs Up';
     thumbsUpBtn.innerHTML = '<img src="../static/images/thumbs-up.svg" class="thumb" alt="Thumbs Up" width="24" height="24">';
-    // thumbsUpBtn.innerHTML = '<i class="fas fa-thumbs-up"  alt="Thumbs Down" width="24" height="24"></i>'
 
     const thumbsDownBtn = document.createElement('button');
     thumbsDownBtn.className = 'feedback-btn thumbs-down';
     thumbsDownBtn.title = 'Thumbs Down';
     thumbsDownBtn.innerHTML = '<img src="../static/images/thumbs-down.svg" alt="Thumbs Down" width="24" height="24">';
-    // thumbsDownBtn.innerHTML  = '<i class="fas fa-thumbs-down"  alt="Thumbs Down" width="24" height="24"></i>'
-
 
     const handleFeedbackClick = async (e, feedbackType) => {
         
@@ -502,3 +495,35 @@ document.addEventListener('click', function(e) {
         sidebar.classList.remove('open');
     }
 }); 
+
+// document.getElementById('modal-close-btn').addEventListener('click', () => {
+//     const modal = document.getElementById('feedbackModal');
+//     modal.classList.remove('show');
+// });
+
+// document.getElementById('submitFeedbackBtn').addEventListener('click', () => {
+//     const subject = document.getElementById('feedbackSubject').value.trim();
+//     const text = document.getElementById('feedbackText').value.trim();
+
+//     if (!subject || !text) {
+//         alert('Please fill in both subject and feedback.');
+//         return;
+//     }
+
+//     const formData = new FormData();
+//     formData.append('feedback', subject); 
+//     formData.append('message', text);
+
+//     fetch('/send-feedback', {
+//         method: 'POST',
+//         body: formData
+//     })
+//     .then(res => res.json())
+//     .then(data => {
+//         console.log('Feedback sent:', data);
+//     })
+//     .catch(console.error);
+
+//     const modal = document.getElementById('feedbackModal');
+//     modal.classList.remove('show');
+// });

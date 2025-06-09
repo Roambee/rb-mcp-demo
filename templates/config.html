@@ -37,7 +37,7 @@
                         <span class="info-icon">
                             <img src="../static/images/warning--alt.svg" alt="Download Disclaimer" class="icon-img" width="auto" height="20px"/>
                             <span class="tooltip-text">
-                                <strong>Disclaimer:</strong> Your OepnAI API key is stored locally in your browser and is never transmitted to Roambee or any third parties. Roambee does not store or access your key and is not liable for its security. By entering your OpenAI API key and clicking "Proceed," you acknowledge and accept full responsibility for its use and agree to our terms and conditions.
+                                <strong>Disclaimer:</strong> Your OpenAI API key is stored locally in your browser and is never transmitted to Roambee or any third parties. Roambee does not store or access your key and is not liable for its security. By entering your OpenAI API key and clicking "Proceed," you acknowledge and accept full responsibility for its use and agree to our terms and conditions.
                             </span>
                         </span>
                     </label>
@@ -50,14 +50,14 @@
                             required
                         >
                         <span class="toggle-password" onclick="togglePassword('openai_key')">
-                            <i class="fas fa-eye"></i>
+                            <img src="../static/images/view-icon.svg" alt="Clear Icon" class="icon" width="20px" height="auto"/>
                         </span>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="roambee_key">
-                        <img src="../static/images/api--key.svg" alt="Icon" width="auto" height="10%" class="fas"/>
+                        <img src="../static/images/api--key.svg" alt="Icon" width="auto" height="10%"/>
                         Roambee API Key
                     </label>
                     <div>
@@ -69,18 +69,18 @@
                             required
                         >
                         <span class="toggle-password" onclick="togglePassword('roambee_key')">
-                            <i class="fas fa-eye"></i>
+                            <img src="../static/images/view-icon.svg" alt="Clear Icon" class="icon" width="20px" height="auto"/>
                         </span>
                     </div>
                 </div>
 
                 <div class="button-group">
                     <button type="button" class="btn btn-secondary" onclick="clearForm()">
-                        <i class="fas fa-eraser"></i>
+                        <img src="../static/images/erase.svg" alt="Clear Icon" class="icon" width="20px" height="auto"/>
                         Clear
                     </button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-arrow-right"></i>
+                        <img src="../static/images/arrow--right.svg" alt="Clear Icon" class="icon" width="20px" height="auto"/>
                         Proceed
                     </button>
                 </div>
@@ -92,7 +92,7 @@
             </div>
 
             <div class="error-message" id="errorMessage" style="display: none;">
-                <i class="fas fa-exclamation-triangle"></i>
+                <img src="../static/images/warning--alt.svg" alt="warning" class="icon-img" width="auto" height="20px"/>
                 <span id="errorText"></span>
             </div>
         </div>

@@ -15,15 +15,16 @@
     <div class="app-container">
         <div class="chat-header">
             <button class="mobile-menu-btn" onclick="toggleSidebar()">
-                <i class="fas fa-bars"></i>
+               <img src="../static/images/menu.svg" alt="Add Icon" class="icon" width="20px" height="auto"/>
             </button>
             <img src="static/images/roambee-logo-whitebg.svg" alt="Icon" id="roambeeLogo"  style="padding-left: 2.5%;" width="auto" height="36px"/>
             <div class="header-controls">
                 <button class="control-btn" onclick="toggleTheme()" title="Toggle Theme">
-                    <i class="fas fa-moon" id="themeIcon"></i>
+                    <img src="../static/images/moon.svg" alt="Moon Icon" id="themeIcon" class="icon" width="20px" height="auto"/>
+
                 </button>
                 <button class="control-btn" onclick="showSettings()" title="Settings">
-                    <i class="fas fa-cog"></i>
+                    <img src="../static/images/settings.svg" alt="Setting Icon" class="icon" width="20px" height="auto"/>
                 </button>
             </div>
         </div>
@@ -34,7 +35,7 @@
                 <div class="sidebar" id="sidebar">
                     <div class="sidebar-header">
                         <button class="new-chat-btn" onclick="startNewChat()">
-                            <i class="fas fa-plus"></i>
+                            <img src="../static/images/add.svg" alt="Add Icon" class="icon" width="25px" height="auto"/>
                             <span>New Chat</span>
                         </button>
                     </div>
@@ -42,7 +43,7 @@
                     <div class="chat-history" id="chatHistory">
                         <div class="history-item active" onclick="selectChat(this)">
                             <div class="history-content">
-                                <i class="fas fa-message"></i>
+                                <img src="../static/images/chat.svg" alt="Message Icon" class="icon" width="20px" height="auto"/>
                                 <span>Current Chat</span>
                             </div>
                         </div>
@@ -67,7 +68,7 @@
                                 maxlength="4000"
                             ></textarea>
                             <button type="submit" class="send-btn" id="sendBtn">
-                                <i class="fas fa-paper-plane"></i>
+                                <img src="../static/images/send--alt--filled.svg" alt="Sent Icon" class="icon" width="20px" height="auto"/>
                             </button>
                         </div>
                         <div class="input-footer">
@@ -86,7 +87,7 @@
             <div class="modal-header">
                 <h3>Settings</h3>
                 <button class="close-btn" onclick="hideSettings()">
-                    <i class="fas fa-times"></i>
+                    <img src="../static/images/close.svg" alt="Close Icon" class="icon" width="25px" height="auto"/>
                 </button>
             </div>
             <div class="modal-body">
@@ -94,11 +95,11 @@
                     <label>Theme</label>
                     <div class="theme-options">
                         <button class="theme-btn" onclick="setTheme('light')">
-                            <i class="fas fa-sun"></i>
+                            <img src="../static/images/sun.svg" alt="Sun Icon" class="icon" width="20px" height="auto"/>
                             Light
                         </button>
                         <button class="theme-btn" onclick="setTheme('dark')">
-                            <i class="fas fa-moon"></i>
+                            <img src="../static/images/moon.svg" alt="Moon Icon" class="icon" width="20px" height="auto"/>
                             Dark
                         </button>
                     </div>
@@ -106,7 +107,7 @@
                 <div class="setting-group">
                     <label>API Configuration</label>
                     <button class="config-btn" onclick="goToConfig()">
-                        <i class="fas fa-key"></i>
+                        <img src="../static/images/api--key.svg" alt="Api Key" class="icon" width="20px" height="auto"/>
                         Update API Keys
                     </button>
                 </div>
