@@ -282,7 +282,7 @@ async function handleMessageSubmit(e) {
         console.error('Error sending message:', error);
         // Only show error message if we haven't received a response
         if (!document.querySelector('.message.assistant:last-child')) {
-            addMessageToChat('assistant', "Sorry, I encountered an error. Please try again.");
+            addMessageToChat('assistant', "Sorry, I encountered an error from API. Please try again.");
         }
     } finally {
         hideLoading();

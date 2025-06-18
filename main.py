@@ -458,7 +458,7 @@ async def send_message(
         logger.info(f"Chat history updated for user {user_id} in chat {chat_id}")
 
         return {
-            "response": chat_history[-1]["content"] if chat_history else "Sorry, I encountered an error. Please try again.",
+            "response": chat_history[-1]["content"] if chat_history else "Sorry, I encountered an error from UI. Please try again.",
             "chat_history": chat_history,
             "chat_id": chat_id
         }
