@@ -454,6 +454,7 @@ async def send_message(
         # Update session cookie with new chat history
         request.session["chat_history"] = chat_history
         request.session["last_access"] = time.time()
+        logger.info(f"Chat history updated for user {user_id}")
 
         return {"response": chat_history[-1]["content"], "chat_history": chat_history}
     except HTTPException:
