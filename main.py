@@ -143,11 +143,14 @@ def generate_user_id(request: Request):
 
 def extract_browser_cache_info(request: Request):
     """Extract browser cache and session information"""
+    # Get client IP considering proxy headers
+    client_ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() if request.headers.get("x-forwarded-for") else request.client.host if request.client else "unknown"
+
     cache_info = {
         "user_agent": request.headers.get("user-agent", ""),
         "accept_language": request.headers.get("accept-language", ""),
         "accept_encoding": request.headers.get("accept-encoding", ""),
-        "client_ip": request.client.host if request.client else "unknown",
+        "client_ip": client_ip,
         "referer": request.headers.get("referer", ""),
         "cache_control": request.headers.get("cache-control", ""),
         "if_none_match": request.headers.get("if-none-match", ""),
@@ -164,6 +167,9 @@ def validate_browser_fingerprint(request: Request, stored_cache: dict):
     logger.info(f"   User agent match: {current_cache['user_agent']} {stored_cache['user_agent']} {current_cache['user_agent'] == stored_cache['user_agent']}")
     logger.info(f"   Client IP match: {current_cache['client_ip']} {stored_cache['client_ip']} {current_cache['client_ip'] == stored_cache['client_ip']}")
     logger.info(f"   Accept language match: {current_cache['accept_language']} {stored_cache['accept_language']} {current_cache['accept_language'] == stored_cache['accept_language']}")
+    logger.info(f"   X-Forwarded-For header: {request.headers.get('x-forwarded-for', 'Not present')}")
+    logger.info(f"   X-Real-IP header: {request.headers.get('x-real-ip', 'Not present')}")
+    logger.info(f"   Remote address: {request.client.host if request.client else 'Unknown'}")
 
     # Check critical browser characteristics
     return (
