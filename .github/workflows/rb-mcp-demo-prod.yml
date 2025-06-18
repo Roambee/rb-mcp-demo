@@ -33,19 +33,19 @@ jobs:
                   docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
                   docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
-            # - name: eks login
-            #   id: eks-login
-            #   run: |
-            #       aws eks update-kubeconfig --region us-east-1 --name rb-us-prod-cluster
+            - name: eks login
+              id: eks-login
+              run: |
+                  aws eks update-kubeconfig --region us-east-1 --name rb-us-prod-cluster
 
-            # - name: Update deployment
-            #   env:
-            #       REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-            #       REPOSITORY: mcp-demo-chatbot-prod
-            #       IMAGE_TAG: ${{ github.sha }}
-            #   run: |
-            #       kubectl set image deployment/fastmcpserver fastmcpserver=$REGISTRY/$REPOSITORY:$IMAGE_TAG
+            - name: Update deployment
+              env:
+                  REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                  REPOSITORY: mcp-demo-chatbot-prod
+                  IMAGE_TAG: ${{ github.sha }}
+              run: |
+                  kubectl set image deployment/mcp-chatbot mcp-chatbot=$REGISTRY/$REPOSITORY:$IMAGE_TAG
 
-            # - name: Check deployment status
-            #   run: |
-            #       kubectl rollout status deployment/fastmcpserver
+            - name: Check deployment status
+              run: |
+                  kubectl rollout status deployment/mcp-chatbot
