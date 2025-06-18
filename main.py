@@ -453,10 +453,12 @@ async def send_message(
 
         # Update chat history for this specific chat
         user_chats[chat_id] = chat_history
+        logger.info(f"User chats: {user_chats}")
         request.session["user_chats"] = user_chats
         request.session["last_access"] = time.time()
         logger.info(f"Chat history updated for user {user_id} in chat {chat_id}")
 
+        logger.info(f"Chat history: {chat_history}")
         return {
             "response": chat_history[-1]["content"] if chat_history else "Sorry, I encountered an error from UI. Please try again.",
             "chat_history": chat_history,
