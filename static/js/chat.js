@@ -180,7 +180,9 @@ function setupEventListeners() {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             if (!isLoading && this.value.trim()) {
-                messageForm.dispatchEvent(new Event('submit'));
+                handleMessageSubmit({
+                    preventDefault: () => {},
+                });
             }
         }
     });
