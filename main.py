@@ -159,6 +159,11 @@ def extract_browser_cache_info(request: Request):
 def validate_browser_fingerprint(request: Request, stored_cache: dict):
     """Validate that browser characteristics haven't changed"""
     current_cache = extract_browser_cache_info(request)
+    logger.info(f"   Current cache: {current_cache}")
+    logger.info(f"   Stored cache: {stored_cache}")
+    logger.info(f"   User agent match: {current_cache['user_agent']} {stored_cache['user_agent']} {current_cache['user_agent'] == stored_cache['user_agent']}")
+    logger.info(f"   Client IP match: {current_cache['client_ip']} {stored_cache['client_ip']} {current_cache['client_ip'] == stored_cache['client_ip']}")
+    logger.info(f"   Accept language match: {current_cache['accept_language']} {stored_cache['accept_language']} {current_cache['accept_language'] == stored_cache['accept_language']}")
 
     # Check critical browser characteristics
     return (
@@ -214,11 +219,20 @@ def check_session_valid(request: Request):
     session_start_time = request.session.get("server_start_time", 0)
     session_id = request.session.get("session_id", "")
     stored_browser_cache = request.session.get("browser_cache", {})
+    logger.info(f"Checking session validity for user")
+    logger.info(f"   Session authenticated: {authenticated}")
+    logger.info(f"   Session start time: {session_start_time}")
+    logger.info(f"   Server start time: {server_start_time}")
+    logger.info(f"   Session ID: {session_id}")
     
     # Invalidate session if it's from a previous server instance
     if authenticated and session_start_time != server_start_time:
+        logger.info(f"Session from previous server instance - clearing cookie {session_start_time} != {server_start_time}")
         request.session.clear()
+        logger.info(f"Session cleared")
+        logger.info(f"Session ID: {session_id}")
         if session_id:
+            logger.info(f"Removing session from tracker {session_id}")
             session_tracker.remove_session(session_id)
         return False
     
@@ -228,6 +242,7 @@ def check_session_valid(request: Request):
             # Validate browser fingerprint
             if validate_browser_fingerprint(request, stored_browser_cache):
                 # Update access time in tracker and session
+                logger.info(f"Session {session_id} is active - updating access time")
                 session_tracker.update_session_access(session_id)
                 request.session["last_access"] = time.time()
                 return True
@@ -289,6 +304,8 @@ async def validate_keys(
     openai_valid = await validate_openai_key(openai_key)
     roambee_valid = await validate_roambee_key(roambee_key)
 
+    logger.info(f"OpenAI valid: {openai_valid}")
+    logger.info(f"Roambee valid: {roambee_valid}")
     if openai_valid and roambee_valid:
         # Validate MCP connection
         mcp_tools = await validate_roambee_sse_connection(roambee_key)
