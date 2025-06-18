@@ -332,7 +332,7 @@ async def validate_keys(
         request.session["created_at"] = time.time()
         request.session["last_access"] = time.time()
         request.session["browser_cache"] = browser_cache_info
-        request.session["chat_history"] = []
+        request.session["user_chats"] = {}
 
         # Only track session ID in server memory (for 50-user limit)
         session_tracker.add_session(user_id, session_id)
@@ -407,7 +407,8 @@ async def chat_with_agent(message: str, openai_key: str, roambee_key: str):
 @app.post("/send-message")
 async def send_message(
     request: Request,
-    message: str = Form(...)
+    message: str = Form(...),
+    chat_id: str = Form(None)
 ):
     """Send message and get AI response - all data from cookies"""
     try:
@@ -418,6 +419,7 @@ async def send_message(
         logger.debug("🔍 Checking session validity (cookie-based):")
         logger.debug(f"   User ID: {user_id}")
         logger.debug(f"   Session ID: {session_id}")
+        logger.debug(f"   Chat ID: {chat_id}")
         logger.debug(f"   Session authenticated: {request.session.get('authenticated', False)}")
         logger.debug(f"   Session valid: {check_session_valid(request)}")
 
@@ -425,38 +427,42 @@ async def send_message(
             logger.warning(f"❌ Invalid session for user {user_id}")
             raise HTTPException(status_code=401, detail="Unauthorized")
 
-        # All data comes from cookies - no server-side storage needed
-        chat_history = request.session.get("chat_history", [])
-        openai_key = request.session.get("openai_key")
-        roambee_key = request.session.get("roambee_key")
-
-        if not openai_key or not roambee_key:
-            logger.error(f"Missing API keys for user {user_id}")
-            raise HTTPException(status_code=400, detail="API keys not found in session")
-
+        # Get or initialize chat histories for this user
+        user_chats = request.session.get("user_chats", {})
+        if not chat_id:
+            chat_id = str(int(time.time() * 1000))  # Generate new chat ID if none provided
+        
+        # Get chat history for this specific chat
+        chat_history = user_chats.get(chat_id, [])
+        
         # Add user message
         chat_history.append({"role": "user", "content": message})
 
         # Get AI response
-        logger.info(f"Question asked by user {user_id}: {message}")
+        logger.info(f"Question asked by user {user_id} in chat {chat_id}: {message}")
         try:
-            agent_response = await chat_with_agent(message, openai_key, roambee_key)
+            agent_response = await chat_with_agent(message, request.session.get("openai_key"), request.session.get("roambee_key"))
             if agent_response:
                 chat_history.append({"role": "assistant", "content": agent_response})
             else:
                 logger.warning(f"No agent response for user {user_id}, falling back to OpenAI")
-                ai_response = await get_ai_response(message, openai_key)
+                ai_response = await get_ai_response(message, request.session.get("openai_key"))
                 chat_history.append({"role": "assistant", "content": ai_response})
         except Exception as e:
             logger.error(f"Error getting AI response for user {user_id}: {str(e)}", exc_info=True)
-            raise HTTPException(status_code=500, detail=f"Error getting AI response: {str(e)}")
 
-        # Update session cookie with new chat history
-        request.session["chat_history"] = chat_history
+        # Update chat history for this specific chat
+        user_chats[chat_id] = chat_history
+        request.session["user_chats"] = user_chats
         request.session["last_access"] = time.time()
-        logger.info(f"Chat history updated for user {user_id}")
+        logger.info(f"Chat history updated for user {user_id} in chat {chat_id}")
 
-        return {"response": chat_history[-1]["content"], "chat_history": chat_history}
+        return {
+            "response": chat_history[-1]["content"] if chat_history else "Sorry, I encountered an error. Please try again.",
+            "chat_history": chat_history,
+            "chat_id": chat_id
+        }
+
     except HTTPException:
         raise
     except Exception as e:
@@ -469,7 +475,12 @@ async def get_chat_history(request: Request):
     if not check_session_valid(request):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    return {"chat_history": request.session.get("chat_history", [])}
+    user_chats = request.session.get("user_chats", {})
+    # Return the most recent chat history if available
+    if user_chats:
+        latest_chat_id = max(user_chats.keys(), key=lambda x: int(x))
+        return {"chat_history": user_chats[latest_chat_id]}
+    return {"chat_history": []}
 
 @app.post("/clear-session")
 async def clear_session(request: Request):
@@ -494,7 +505,7 @@ async def reset_config(request: Request):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     # Keep authentication but clear chat history in cookie
-    request.session["chat_history"] = []
+    request.session["user_chats"] = {}
     request.session["last_access"] = time.time()
 
     return {"status": "success", "redirect": "/"}
@@ -515,7 +526,7 @@ async def get_session_info(request: Request):
             "authenticated": request.session.get("authenticated", False),
             "created_at": request.session.get("created_at", 0),
             "last_access": request.session.get("last_access", 0),
-            "chat_history_length": len(request.session.get("chat_history", [])),
+            "chat_history_length": len(request.session.get("user_chats", {}).get(session_id, [])),
             "has_api_keys": bool(request.session.get("openai_key")) and bool(request.session.get("roambee_key"))
         },
         "is_session_active": session_tracker.is_session_active(session_id)

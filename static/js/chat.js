@@ -2,6 +2,7 @@
 let chatHistory = [];
 let currentTheme = localStorage.getItem('theme') || 'light';
 let isLoading = false;
+let currentChatId = null;
 
 // Initialize the chat application
 document.addEventListener('DOMContentLoaded', function() {
@@ -110,6 +111,7 @@ function startNewChat() {
 
 function clearCurrentChat() {
     chatHistory = [];
+    currentChatId = Date.now().toString(); // Generate new chat ID
     const chatContainer = document.getElementById('chatContainer');
     chatContainer.style.justifyContent = 'center';
     chatContainer.style.alignContent = 'center';
@@ -143,6 +145,7 @@ function addChatToHistory(title, date) {
     
     const historyItem = document.createElement('div');
     historyItem.className = 'history-item active';
+    historyItem.dataset.chatId = currentChatId; // Store chat ID
     historyItem.onclick = () => selectChat(historyItem);
     
     historyItem.innerHTML = `
@@ -247,32 +250,40 @@ async function handleMessageSubmit(e) {
     try {
         const formData = new FormData();
         formData.append('message', message);
+        formData.append('chat_id', currentChatId); // Send chat ID to server
         
         const response = await fetch('/send-message', {
             method: 'POST',
             body: formData
         });
         
-        if (!response.ok) {
-            throw new Error('Failed to send message');
-        }
-        
         const data = await response.json();
         
-        // Add AI response to chat
-        addMessageToChat('assistant', data.response);
+        if (!response.ok) {
+            throw new Error(data.detail || 'Failed to send message');
+        }
         
-        // Update chat history
-        chatHistory = data.chat_history || [];
-        
-        // Update chat title in sidebar if this is the first message
-        if (chatHistory.length === 2) { // User + Assistant message
-            updateChatTitle(message);
+        if (data.response) {
+            // Add AI response to chat
+            addMessageToChat('assistant', data.response);
+            
+            // Update chat history
+            chatHistory = data.chat_history || [];
+            
+            // Update chat title in sidebar if this is the first message
+            if (chatHistory.length === 2) { // User + Assistant message
+                updateChatTitle(message);
+            }
+        } else {
+            throw new Error('No response received from server');
         }
         
     } catch (error) {
         console.error('Error sending message:', error);
-        addMessageToChat('assistant', "Sorry, I encountered an error. Please try again.");
+        // Only show error message if we haven't received a response
+        if (!document.querySelector('.message.assistant:last-child')) {
+            addMessageToChat('assistant', "Sorry, I encountered an error. Please try again.");
+        }
     } finally {
         hideLoading();
     }
@@ -452,16 +463,26 @@ async function loadChatHistory() {
             const data = await response.json();
             chatHistory = data.chat_history || [];
             
+            // Generate a new chat ID if none exists
+            if (!currentChatId) {
+                currentChatId = Date.now().toString();
+            }
+            
             // Render existing chat history
             if (chatHistory.length > 0) {
                 const chatContainer = document.getElementById('chatContainer');
                 const welcomeMessage = chatContainer.querySelector('.welcome-message');
                 if (welcomeMessage) {
                     welcomeMessage.remove();
-                     chatContainer.style.alignContent = 'flex-start';
+                    chatContainer.style.alignContent = 'flex-start';
                     chatContainer.style.flexWrap = 'wrap';
                 }
                 
+                // Add chat to history sidebar
+                const firstMessage = chatHistory[0].content;
+                addChatToHistory(truncateText(firstMessage, 30), new Date());
+                
+                // Render messages
                 chatHistory.forEach(msg => {
                     addMessageToChat(msg.role, msg.content);
                 });
