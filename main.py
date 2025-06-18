@@ -366,13 +366,20 @@ async def chat_page(request: Request):
 
 async def chat_with_agent(message: str, openai_key: str, roambee_key: str):
     """Chat with agent using MCP tools"""
-    response = False
     try:
         res_json = False
         now = datetime.now()
         day, month, year = now.day, now.strftime("%B"), now.year
+
+        logger.info("Connecting to Roambee MCP server...")
         mcp_tools = await validate_roambee_sse_connection(roambee_key)
-        logger.info(f"\n\nToday's date is {day} {month} {year}")
+        if not mcp_tools:
+            logger.error("Failed to connect to Roambee MCP server")
+            return None
+
+        logger.info(f"Successfully connected to MCP server. Found {len(mcp_tools)} tools.")
+        logger.info(f"Today's date is {day} {month} {year}")
+
         model_client = OpenAIChatCompletionClient(model="gpt-4o", api_key=openai_key)
         agent = AssistantAgent(
                 name="Roambee_MCP_Agent",
@@ -382,10 +389,17 @@ async def chat_with_agent(message: str, openai_key: str, roambee_key: str):
                 system_message=f"You are a helpful assistant. If you get dates or datetime in seconds or milliseconds then\
                       show always in human readable format. Today's date is {day} {month} {year}.")
 
+        logger.info("Running agent with message...")
         result = await agent.run(task=message, cancellation_token=CancellationToken())
+
         if result and result.messages:
             res_json = result.messages[-1].content
-        return res_json
+            logger.info("Successfully got response from agent")
+            return res_json
+        else:
+            logger.warning("No messages in agent result")
+            return None
+
     except Exception as e:
         logger.error(f"Error in chat_with_agent: {e}")
         return f"Sorry, an error occurred while processing your request.\n{e}"
@@ -396,41 +410,57 @@ async def send_message(
     message: str = Form(...)
 ):
     """Send message and get AI response - all data from cookies"""
-    user_id = generate_user_id(request)
-    session_id = request.session.get("session_id", "")
+    try:
+        user_id = generate_user_id(request)
+        session_id = request.session.get("session_id", "")
 
-    logger.debug("🔍 Checking session validity (cookie-based):")
-    logger.debug(f"   User ID: {user_id}")
-    logger.debug(f"   Session ID: {session_id}")
-    logger.debug(f"   Session authenticated: {request.session.get('authenticated', False)}")
-    logger.debug(f"   Session valid: {check_session_valid(request)}")
+        logger.info(f"🔍 Processing message for user {user_id} with session {session_id}")
+        logger.debug("🔍 Checking session validity (cookie-based):")
+        logger.debug(f"   User ID: {user_id}")
+        logger.debug(f"   Session ID: {session_id}")
+        logger.debug(f"   Session authenticated: {request.session.get('authenticated', False)}")
+        logger.debug(f"   Session valid: {check_session_valid(request)}")
 
-    if not check_session_valid(request):
-        logger.warning(f"❌ Invalid session for user {user_id}")
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        if not check_session_valid(request):
+            logger.warning(f"❌ Invalid session for user {user_id}")
+            raise HTTPException(status_code=401, detail="Unauthorized")
 
-    # All data comes from cookies - no server-side storage needed
-    chat_history = request.session.get("chat_history", [])
-    openai_key = request.session.get("openai_key")
-    roambee_key = request.session.get("roambee_key")
+        # All data comes from cookies - no server-side storage needed
+        chat_history = request.session.get("chat_history", [])
+        openai_key = request.session.get("openai_key")
+        roambee_key = request.session.get("roambee_key")
 
-    # Add user message
-    chat_history.append({"role": "user", "content": message})
+        if not openai_key or not roambee_key:
+            logger.error(f"Missing API keys for user {user_id}")
+            raise HTTPException(status_code=400, detail="API keys not found in session")
 
-    # Get AI response
-    logger.info(f"Question asked by user : {message}")
-    agent_response = await chat_with_agent(message, openai_key, roambee_key)
-    if agent_response:
-        chat_history.append({"role": "assistant", "content": agent_response})
-    else:
-        ai_response = await get_ai_response(message, openai_key)
-        chat_history.append({"role": "assistant", "content": ai_response})
+        # Add user message
+        chat_history.append({"role": "user", "content": message})
 
-    # Update session cookie with new chat history
-    request.session["chat_history"] = chat_history
-    request.session["last_access"] = time.time()
+        # Get AI response
+        logger.info(f"Question asked by user {user_id}: {message}")
+        try:
+            agent_response = await chat_with_agent(message, openai_key, roambee_key)
+            if agent_response:
+                chat_history.append({"role": "assistant", "content": agent_response})
+            else:
+                logger.warning(f"No agent response for user {user_id}, falling back to OpenAI")
+                ai_response = await get_ai_response(message, openai_key)
+                chat_history.append({"role": "assistant", "content": ai_response})
+        except Exception as e:
+            logger.error(f"Error getting AI response for user {user_id}: {str(e)}", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Error getting AI response: {str(e)}")
 
-    return {"response": chat_history[-1]["content"], "chat_history": chat_history}
+        # Update session cookie with new chat history
+        request.session["chat_history"] = chat_history
+        request.session["last_access"] = time.time()
+
+        return {"response": chat_history[-1]["content"], "chat_history": chat_history}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in send_message for user {user_id if 'user_id' in locals() else 'unknown'}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 @app.get("/chat-history")
 async def get_chat_history(request: Request):
