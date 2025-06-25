@@ -3,6 +3,9 @@ let chatHistory = [];
 let currentTheme = localStorage.getItem('theme') || 'light';
 let isLoading = false;
 let currentChatId = null;
+let requestRetryCount = 0;
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 1000; // 1 second
 
 // Initialize the chat application
 document.addEventListener('DOMContentLoaded', function() {
@@ -10,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
     loadChatHistory();
     setupEventListeners();
     autoResizeTextarea();
+    
+    // Add periodic session validation
+    setInterval(validateSession, 30000); // Check every 30 seconds
 });
 
 // Theme management
@@ -226,6 +232,79 @@ function updateCharCount() {
     }
 }
 
+// Session validation function
+async function validateSession() {
+    try {
+        const response = await fetch('/session-info', {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (!response.ok && response.status === 401) {
+            console.warn('Session expired, redirecting to config page');
+            window.location.href = '/';
+        }
+    } catch (error) {
+        console.warn('Session validation failed:', error);
+    }
+}
+
+// Enhanced error logging function
+function logDetailedError(context, error, additionalInfo = {}) {
+    const errorDetails = {
+        timestamp: new Date().toISOString(),
+        context: context,
+        error: {
+            message: error.message || 'Unknown error',
+            name: error.name || 'Error',
+            stack: error.stack || 'No stack trace available'
+        },
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        sessionStorage: {
+            hasSession: !!sessionStorage.getItem('sessionId'),
+            chatId: currentChatId
+        },
+        additionalInfo: additionalInfo
+    };
+    
+    console.error('Detailed Error Log:', errorDetails);
+    
+    // Optional: Send error to server for logging
+    try {
+        fetch('/log-client-error', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(errorDetails),
+            credentials: 'include'
+        }).catch(e => console.warn('Failed to send error log to server:', e));
+    } catch (e) {
+        console.warn('Failed to send error log to server:', e);
+    }
+}
+
+// Enhanced retry mechanism
+async function retryRequest(requestFn, maxRetries = MAX_RETRY_ATTEMPTS, delay = RETRY_DELAY_MS) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const result = await requestFn();
+            return result;
+        } catch (error) {
+            console.warn(`Request attempt ${attempt} failed:`, error);
+            
+            if (attempt === maxRetries) {
+                throw error;
+            }
+            
+            // Exponential backoff
+            const backoffDelay = delay * Math.pow(2, attempt - 1);
+            await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        }
+    }
+}
+
 async function handleMessageSubmit(e) {
     e.preventDefault();
     
@@ -248,41 +327,87 @@ async function handleMessageSubmit(e) {
     showLoading();
     
     try {
-        const formData = new FormData();
-        formData.append('message', message);
-        formData.append('chat_id', currentChatId); // Send chat ID to server
-        
-        const response = await fetch('/send-message', {
-            method: 'POST',
-            body: formData
+        const result = await retryRequest(async () => {
+            const formData = new FormData();
+            formData.append('message', message);
+            formData.append('chat_id', currentChatId);
+            
+            const response = await fetch('/send-message', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                const errorInfo = {
+                    status: response.status,
+                    statusText: response.statusText,
+                    responseData: data,
+                    headers: Object.fromEntries(response.headers.entries())
+                };
+                
+                logDetailedError('Message send failed', new Error(`HTTP ${response.status}: ${data.detail || response.statusText}`), errorInfo);
+                
+                if (response.status === 401) {
+                    // Session expired
+                    console.warn('Session expired, redirecting to config page');
+                    window.location.href = '/';
+                    return;
+                } else if (response.status === 429) {
+                    throw new Error('Rate limit exceeded. Please wait and try again.');
+                } else if (response.status >= 500) {
+                    throw new Error('Server error. Please try again.');
+                } else {
+                    throw new Error(data.detail || `Request failed with status ${response.status}`);
+                }
+            }
+            
+            return data;
         });
         
-        const data = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(data.detail || 'Failed to send message');
-        }
-        
-        if (data.response) {
+        if (result && result.response) {
             // Add AI response to chat
-            addMessageToChat('assistant', data.response);
+            addMessageToChat('assistant', result.response);
             
             // Update chat history
-            chatHistory = data.chat_history || [];
+            chatHistory = result.chat_history || [];
             
             // Update chat title in sidebar if this is the first message
             if (chatHistory.length === 2) { // User + Assistant message
                 updateChatTitle(message);
             }
+            
+            // Reset retry count on success
+            requestRetryCount = 0;
         } else {
             throw new Error('No response received from server');
         }
         
     } catch (error) {
-        console.error('Error sending message:', error);
+        logDetailedError('handleMessageSubmit', error, {
+            message: message,
+            chatId: currentChatId,
+            retryCount: requestRetryCount
+        });
+        
+        // Enhanced error message based on error type
+        let errorMessage = "Sorry, I encountered an error. Please try again.";
+        
+        if (error.message.includes('Rate limit')) {
+            errorMessage = "Rate limit exceeded. Please wait a moment and try again.";
+        } else if (error.message.includes('Session')) {
+            errorMessage = "Your session has expired. Please refresh the page and log in again.";
+        } else if (error.message.includes('Server error')) {
+            errorMessage = "Server is temporarily unavailable. Please try again in a few moments.";
+        } else if (error.message.includes('Network')) {
+            errorMessage = "Network connection issue. Please check your internet connection and try again.";
+        }
+        
         // Only show error message if we haven't received a response
         if (!document.querySelector('.message.assistant:last-child')) {
-            addMessageToChat('assistant', "Sorry, I encountered an error from API. Please try again.");
+            addMessageToChat('assistant', errorMessage);
         }
     } finally {
         hideLoading();
