@@ -634,6 +634,13 @@ async def send_message(
         logger.info(f"🚀 Message request from user {user_id[:8]}...")
         logger.debug(f"📝 Message content: {message[:100]}{'...' if len(message) > 100 else ''}")
         
+        # Log session state
+        session_id = request.session.get("session_id", "none")
+        logger.info(f"🔍 Session ID: {session_id}")
+        logger.info(f"🔍 Session authenticated: {request.session.get('authenticated', False)}")
+        logger.info(f"🔍 Has OpenAI key: {bool(request.session.get('openai_key'))}")
+        logger.info(f"🔍 Has Roambee key: {bool(request.session.get('roambee_key'))}")
+
         # Validate session with better error handling
         try:
             if not check_session_valid(request):
@@ -648,6 +655,8 @@ async def send_message(
                     },
                     headers={"Content-Type": "application/json"}
                 )
+            else:
+                logger.info(f"✅ Session validation passed for user {user_id}")
             
         except Exception as session_error:
             logger.error(f"❌ Session validation error for user {user_id}: {str(session_error)}", exc_info=True)
@@ -679,12 +688,15 @@ async def send_message(
                         "Retry-After": "60"
                     }
                 )
+            else:
+                logger.info(f"✅ Rate limit check passed for user {user_id}")
         except Exception as rate_error:
             logger.error(f"❌ Rate limiting error for user {user_id}: {str(rate_error)}", exc_info=True)
             # Continue processing - don't fail on rate limiting errors
         
         # Validate message content
         if not message or not message.strip():
+            logger.warning(f"⚠️  Empty message from user {user_id}")
             return JSONResponse(
                 status_code=400,
                 content={
@@ -696,6 +708,7 @@ async def send_message(
             )
         
         if len(message) > 10000:  # Reasonable message length limit
+            logger.warning(f"⚠️  Message too long from user {user_id}: {len(message)} characters")
             return JSONResponse(
                 status_code=400,
                 content={
@@ -712,6 +725,8 @@ async def send_message(
         
         if not openai_key or not roambee_key:
             logger.error(f"❌ Missing API keys for user {user_id}")
+            logger.error(f"   OpenAI key present: {bool(openai_key)}")
+            logger.error(f"   Roambee key present: {bool(roambee_key)}")
             return JSONResponse(
                 status_code=401,
                 content={
@@ -723,8 +738,11 @@ async def send_message(
                 headers={"Content-Type": "application/json"}
             )
         
+        logger.info(f"🔑 API keys validated for user {user_id}")
+        
         # Get AI response with enhanced error handling
         try:
+            logger.info(f"🤖 Starting AI chat for user {user_id}")
             ai_response = await chat_with_agent(message, openai_key, roambee_key, user_id)
             
             if not ai_response:
@@ -738,6 +756,8 @@ async def send_message(
                     },
                     headers={"Content-Type": "application/json"}
                 )
+
+            logger.info(f"✅ AI response generated successfully for user {user_id}")
             
         except Exception as ai_error:
             logger.error(f"❌ AI response error for user {user_id}: {str(ai_error)}", exc_info=True)
@@ -782,6 +802,8 @@ async def send_message(
             request.session["user_chats"] = user_chats
             request.session["last_access"] = time.time()
             
+            logger.info(f"💾 Chat history stored for user {user_id}")
+
         except Exception as storage_error:
             logger.error(f"❌ Chat storage error for user {user_id}: {str(storage_error)}", exc_info=True)
             # Continue - don't fail the response due to storage issues
@@ -1114,6 +1136,47 @@ def check_rate_limit(user_id: str, max_requests: int = 10, window_seconds: int =
         request_counts[user_id] = user_requests
         return True
 
+@app.get("/debug-info")
+async def debug_info(request: Request):
+    """Debug endpoint to help troubleshoot issues"""
+    try:
+        user_id = generate_user_id(request)
+        session_valid = check_session_valid(request)
+
+        debug_data = {
+            "timestamp": datetime.now().isoformat(),
+            "user_id": user_id[:8] + "...",  # Truncated for privacy
+            "session_valid": session_valid,
+            "session_data": {
+                "authenticated": request.session.get("authenticated", False),
+                "session_id": request.session.get("session_id", "none"),
+                "has_openai_key": bool(request.session.get("openai_key")),
+                "has_roambee_key": bool(request.session.get("roambee_key")),
+                "server_start_time": request.session.get("server_start_time", 0),
+                "current_server_start": server_start_time,
+                "last_access": request.session.get("last_access", 0),
+                "created_at": request.session.get("created_at", 0)
+            },
+            "session_tracker": session_tracker.get_stats(),
+            "rate_limiting": {
+                "active_users": len(request_counts),
+                "user_requests": len(request_counts.get(user_id, []))
+            }
+        }
+
+        return JSONResponse(
+            status_code=200,
+            content=debug_data,
+            headers={"Content-Type": "application/json"}
+        )
+
+    except Exception as e:
+        logger.error(f"❌ Debug info error: {str(e)}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)},
+            headers={"Content-Type": "application/json"}
+        )
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Roambee Chat App')
