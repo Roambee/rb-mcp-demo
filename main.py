@@ -285,7 +285,6 @@ async def lifespan(app: FastAPI):
     # Shutdown (if needed)
     logger.info("👋 Server shutting down...")
 
-# Define middleware and exception handlers before creating the app
 class MultiUserErrorHandlerMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         try:
@@ -346,7 +345,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "errors": exc.errors(),
             "error_code": "VALIDATION_ERROR"
         },
-        headers={"Content-Type": "application/json"}
+        headers={
+            "Content-Type": "application/json",
+            "X-Content-Type-Options": "nosniff"
+        }
     )
 
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
@@ -359,7 +361,6 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     
     logger.warning(f"⚠️  HTTP {exc.status_code} error for user {user_id} on {request.url.path}: {exc.detail}")
     
-    # For API endpoints, always return JSON
     if request.url.path.startswith('/send-message') or \
        request.url.path.startswith('/validate-keys') or \
        request.url.path.startswith('/log-client-error') or \
@@ -372,9 +373,13 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
                 "status": "error",
                 "detail": exc.detail,
                 "error_code": f"HTTP_{exc.status_code}",
-                "timestamp": time.time()
+                "timestamp": time.time(),
             },
-            headers={"Content-Type": "application/json"}
+            headers={
+                "Content-Type": "application/json",
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "no-cache, no-store, must-revalidate"
+            }
         )
     
     # For HTML endpoints, return HTML redirect or error page
@@ -383,8 +388,12 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     
     return JSONResponse(
         status_code=exc.status_code,
-        content={"detail": exc.detail},
-        headers={"Content-Type": "application/json"}
+        content={
+            "detail": exc.detail
+        },
+        headers={
+            "Content-Type": "application/json"
+        }
     )
 
 # Create FastAPI app
@@ -787,7 +796,7 @@ async def send_message(
             content={
                 "status": "success",
                 "response": ai_response,
-                "timestamp": time.time(),
+                "timestamp": time.time()
                 "response_time": response_time
             },
             headers={"Content-Type": "application/json"}
@@ -1002,7 +1011,7 @@ async def health_check():
         openai_status = "Unknown"
         roambee_status = "Unknown"
         
-        return {
+        response_data = {
             "status": "healthy",
             "timestamp": current_time,
             "uptime_seconds": uptime,
@@ -1015,15 +1024,30 @@ async def health_check():
             "memory_usage": {
                 "active_sessions": len(session_tracker.active_sessions),
                 "user_mappings": len(session_tracker.user_to_session)
-            }
+            },
         }
+        
+        return JSONResponse(
+            status_code=200,
+            content=response_data,
+            headers={
+                "Content-Type": "application/json",
+                "Cache-Control": "no-cache, no-store, must-revalidate"
+            }
+        )
     except Exception as e:
         logger.error(f"❌ Health check failed: {str(e)}", exc_info=True)
-        return {
-            "status": "unhealthy",
-            "error": str(e),
-            "timestamp": time.time()
-        }
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "unhealthy",
+                "error": str(e),
+                "timestamp": time.time()
+            },
+            headers={
+                "Content-Type": "application/json"
+            }
+        )
 
 @app.get("/debug-session/{session_id}")
 async def debug_session(session_id: str, request: Request):
