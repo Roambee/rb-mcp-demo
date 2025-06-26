@@ -54,11 +54,16 @@ The **Roambee MCP Demo** is an intelligent conversational interface that leverag
 # Build the image
 docker build -t roambee-mcp-chatbot .
 
-# Run with custom settings and debug logging
-docker run -p 3000:3000 \
+# Run with volume mounting for logs
+docker run -p 3000:8000 \
+  -v $(pwd)/logs:/app/logs \
+  roambee-mcp-chatbot
+
+# Or run with custom host/port (override Dockerfile CMD)
+docker run -p 4000:4000 \
   -v $(pwd)/logs:/app/logs \
   roambee-mcp-chatbot \
-  --host 0.0.0.0 --port 3000 --log-level DEBUG
+  python main.py --host 0.0.0.0 --port 4000 --log-level DEBUG
 ```
 
 ### Option 2: Local Python Installation

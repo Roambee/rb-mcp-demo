@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Request, Form, HTTPException, Depends, Cookie
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Request, Form, HTTPException, Depends, Cookie, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -24,6 +24,9 @@ from collections import OrderedDict
 import time
 from typing import Optional
 import threading
+from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # Configure logging with more detailed format
 os.makedirs('logs', exist_ok=True)  # Create logs directory if it doesn't exist
@@ -282,15 +285,125 @@ async def lifespan(app: FastAPI):
     # Shutdown (if needed)
     logger.info("👋 Server shutting down...")
 
-app = FastAPI(title="Roambee MCP Demo", lifespan=lifespan)
+# Define middleware and exception handlers before creating the app
+class MultiUserErrorHandlerMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        try:
+            response = await call_next(request)
+            return response
+        except Exception as exc:
+            # Log the error with detailed context
+            user_id = "unknown"
+            try:
+                user_id = generate_user_id(request)
+            except:
+                pass
+            
+            logger.error(f"❌ Unhandled error for user {user_id} on {request.url.path}: {str(exc)}", exc_info=True)
+            
+            # For API endpoints, always return JSON
+            if request.url.path.startswith('/send-message') or \
+               request.url.path.startswith('/validate-keys') or \
+               request.url.path.startswith('/log-client-error') or \
+               request.url.path.startswith('/session-info') or \
+               request.url.path.startswith('/chat-history'):
+                
+                error_response = {
+                    "status": "error",
+                    "detail": "An unexpected server error occurred. Please try again.",
+                    "error_code": "INTERNAL_SERVER_ERROR",
+                    "timestamp": time.time()
+                }
+                
+                return JSONResponse(
+                    status_code=500,
+                    content=error_response,
+                    headers={"Content-Type": "application/json"}
+                )
+            
+            # For other endpoints, return appropriate response
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Internal server error"},
+                headers={"Content-Type": "application/json"}
+            )
+
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle validation errors with proper JSON response"""
+    user_id = "unknown"
+    try:
+        user_id = generate_user_id(request)
+    except:
+        pass
+    
+    logger.warning(f"⚠️  Validation error for user {user_id}: {exc.errors()}")
+    
+    return JSONResponse(
+        status_code=422,
+        content={
+            "status": "error",
+            "detail": "Invalid request data",
+            "errors": exc.errors(),
+            "error_code": "VALIDATION_ERROR"
+        },
+        headers={"Content-Type": "application/json"}
+    )
+
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Handle HTTP exceptions with proper JSON response for API endpoints"""
+    user_id = "unknown"
+    try:
+        user_id = generate_user_id(request)
+    except:
+        pass
+    
+    logger.warning(f"⚠️  HTTP {exc.status_code} error for user {user_id} on {request.url.path}: {exc.detail}")
+    
+    # For API endpoints, always return JSON
+    if request.url.path.startswith('/send-message') or \
+       request.url.path.startswith('/validate-keys') or \
+       request.url.path.startswith('/log-client-error') or \
+       request.url.path.startswith('/session-info') or \
+       request.url.path.startswith('/chat-history'):
+        
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "status": "error",
+                "detail": exc.detail,
+                "error_code": f"HTTP_{exc.status_code}",
+                "timestamp": time.time()
+            },
+            headers={"Content-Type": "application/json"}
+        )
+    
+    # For HTML endpoints, return HTML redirect or error page
+    if exc.status_code == 401:
+        return RedirectResponse(url="/", status_code=302)
+    
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers={"Content-Type": "application/json"}
+    )
+
+# Create FastAPI app
+app = FastAPI(title="Roambee MCP Demo", description="Multi-user chat application with enhanced error handling")
 
 # Add session middleware with new secret key (clears all existing sessions)
 app.add_middleware(SessionMiddleware, secret_key=session_secret)
 
+# Add middleware for multi-user error handling
+app.add_middleware(MultiUserErrorHandlerMiddleware)
+
+# Add custom exception handlers
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Setup templates
+# Initialize templates
 templates = Jinja2Templates(directory="templates")
 
 def check_session_valid(request: Request):
@@ -501,176 +614,201 @@ async def chat_with_agent(message: str, openai_key: str, roambee_key: str, user_
 @app.post("/send-message")
 async def send_message(
     request: Request,
-    message: str = Form(...),
-    chat_id: str = Form(None)
+    message: str = Form(...)
 ):
-    """Send message and get AI response - all data from cookies with enhanced error handling"""
-    user_id = None
-    session_id = None
+    """Enhanced send message endpoint with robust multi-user error handling"""
+    user_id = generate_user_id(request)
+    start_time = time.time()
     
     try:
-        user_id = generate_user_id(request)
-        session_id = request.session.get("session_id", "")
+        # Enhanced logging for multi-user debugging
+        logger.info(f"🚀 Message request from user {user_id[:8]}...")
+        logger.debug(f"📝 Message content: {message[:100]}{'...' if len(message) > 100 else ''}")
         
-        logger.info(f"🔍 Processing message for user {user_id} with session {session_id}")
-        logger.debug(f"   Message: {message[:100]}{'...' if len(message) > 100 else ''}")
-        logger.debug(f"   Chat ID: {chat_id}")
-        logger.debug(f"   Session authenticated: {request.session.get('authenticated', False)}")
-        
-        # Check rate limiting first
-        if not check_rate_limit(user_id, max_requests=15, window_seconds=60):
-            logger.warning(f"⚠️  Rate limit exceeded for user {user_id}")
-            raise HTTPException(
-                status_code=429, 
-                detail="Too many requests. Please wait a moment before sending another message."
-            )
-        
-        # Enhanced session validation with detailed logging
-        if not check_session_valid(request):
-            logger.warning(f"❌ Invalid session for user {user_id}")
-            # Clean up invalid session data
-            try:
-                if session_id:
-                    session_tracker.remove_session(session_id)
-                request.session.clear()
-            except Exception as cleanup_error:
-                logger.error(f"Error cleaning up invalid session: {cleanup_error}")
+        # Validate session with better error handling
+        try:
+            if not check_session_valid(request):
+                logger.warning(f"⚠️  Invalid session for user {user_id}")
+                return JSONResponse(
+                    status_code=401,
+                    content={
+                        "status": "error",
+                        "detail": "Session expired. Please refresh the page and try again.",
+                        "error_code": "INVALID_SESSION",
+                        "requires_refresh": True
+                    },
+                    headers={"Content-Type": "application/json"}
+                )
             
-            raise HTTPException(
-                status_code=401, 
-                detail="Session expired or invalid. Please refresh the page and log in again."
+        except Exception as session_error:
+            logger.error(f"❌ Session validation error for user {user_id}: {str(session_error)}", exc_info=True)
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "status": "error",
+                    "detail": "Session validation failed. Please refresh the page and try again.",
+                    "error_code": "SESSION_VALIDATION_ERROR",
+                    "requires_refresh": True
+                },
+                headers={"Content-Type": "application/json"}
             )
-
-        # Validate message length
-        if len(message) > 4000:
-            logger.warning(f"⚠️  Message too long from user {user_id}: {len(message)} characters")
-            raise HTTPException(
+        
+        # Enhanced rate limiting for multi-user environments
+        try:
+            if not check_rate_limit(user_id):
+                logger.warning(f"⚠️  Rate limit exceeded for user {user_id}")
+                return JSONResponse(
+                    status_code=429,
+                    content={
+                        "status": "error",
+                        "detail": "Too many requests. Please wait a moment before sending another message.",
+                        "error_code": "RATE_LIMIT_EXCEEDED",
+                        "retry_after": 60
+                    },
+                    headers={
+                        "Content-Type": "application/json",
+                        "Retry-After": "60"
+                    }
+                )
+        except Exception as rate_error:
+            logger.error(f"❌ Rate limiting error for user {user_id}: {str(rate_error)}", exc_info=True)
+            # Continue processing - don't fail on rate limiting errors
+        
+        # Validate message content
+        if not message or not message.strip():
+            return JSONResponse(
                 status_code=400,
-                detail="Message is too long. Please limit your message to 4000 characters."
+                content={
+                    "status": "error",
+                    "detail": "Message cannot be empty.",
+                    "error_code": "EMPTY_MESSAGE"
+                },
+                headers={"Content-Type": "application/json"}
             )
-
-        # Validate API keys exist
+        
+        if len(message) > 10000:  # Reasonable message length limit
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "status": "error",
+                    "detail": "Message is too long. Please keep it under 10,000 characters.",
+                    "error_code": "MESSAGE_TOO_LONG"
+                },
+                headers={"Content-Type": "application/json"}
+            )
+        
+        # Get session data
         openai_key = request.session.get("openai_key")
         roambee_key = request.session.get("roambee_key")
         
         if not openai_key or not roambee_key:
             logger.error(f"❌ Missing API keys for user {user_id}")
-            raise HTTPException(
-                status_code=401, 
-                detail="API keys missing. Please reconfigure your keys."
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "status": "error",
+                    "detail": "API keys not found. Please refresh the page and log in again.",
+                    "error_code": "MISSING_API_KEYS",
+                    "requires_refresh": True
+                },
+                headers={"Content-Type": "application/json"}
             )
-
-        # Get or initialize chat histories for this user with error handling
+        
+        # Get AI response with enhanced error handling
         try:
-            user_chats = request.session.get("user_chats", {})
-            if not chat_id:
-                chat_id = str(int(time.time() * 1000))  # Generate new chat ID if none provided
+            ai_response = await chat_with_agent(message, openai_key, roambee_key, user_id)
             
-            # Get chat history for this specific chat
-            chat_history = user_chats.get(chat_id, [])
-            
-            # Limit chat history size to prevent memory issues
-            if len(chat_history) > 100:  # Keep last 100 messages
-                chat_history = chat_history[-100:]
-                logger.info(f"Trimmed chat history for user {user_id} to 100 messages")
-            
-        except Exception as chat_error:
-            logger.error(f"❌ Error accessing chat history for user {user_id}: {str(chat_error)}", exc_info=True)
-            chat_history = []
-            chat_id = str(int(time.time() * 1000))
-        
-        # Add user message
-        chat_history.append({"role": "user", "content": message})
-        
-        # Log the chat request
-        logger.info(f"📝 Question from user {user_id} in chat {chat_id}: {message[:200]}{'...' if len(message) > 200 else ''}")
-        
-        # Get AI response with timeout and error handling
-        response_generated = False
-        try:
-            agent_response = await asyncio.wait_for(
-                chat_with_agent(message, openai_key, roambee_key, user_id),
-                timeout=120.0  # 2 minute timeout
-            )
-            
-            if agent_response:
-                chat_history.append({"role": "assistant", "content": agent_response})
-                logger.info(f"✅ Agent response generated for user {user_id}")
-                response_generated = True
-            else:
-                logger.warning(f"⚠️  No agent response for user {user_id}, falling back to OpenAI")
-                ai_response = await asyncio.wait_for(
-                    get_ai_response(message, openai_key, user_id),
-                    timeout=60.0  # 1 minute timeout for fallback
+            if not ai_response:
+                logger.error(f"❌ Empty AI response for user {user_id}")
+                return JSONResponse(
+                    status_code=500,
+                    content={
+                        "status": "error",
+                        "detail": "Unable to generate response. Please try again.",
+                        "error_code": "EMPTY_AI_RESPONSE"
+                    },
+                    headers={"Content-Type": "application/json"}
                 )
-                chat_history.append({"role": "assistant", "content": ai_response})
-                response_generated = True
-                
-        except asyncio.TimeoutError:
-            logger.error(f"❌ Timeout getting AI response for user {user_id}")
-            chat_history.append({"role": "assistant", "content": "Sorry, the request timed out. Please try again with a shorter message."})
             
         except Exception as ai_error:
-            logger.error(f"❌ Error getting AI response for user {user_id}: {str(ai_error)}", exc_info=True)
-            
-            # Provide more specific error messages based on the error type
-            error_message = "Sorry, I encountered an error processing your request. Please try again."
-            if "api" in str(ai_error).lower() and "key" in str(ai_error).lower():
-                error_message = "API key issue detected. Please check your configuration."
-            elif "rate" in str(ai_error).lower() or "quota" in str(ai_error).lower():
-                error_message = "API rate limit or quota exceeded. Please try again later."
-            elif "connection" in str(ai_error).lower() or "timeout" in str(ai_error).lower():
-                error_message = "Connection issue with AI service. Please try again."
-            
-            chat_history.append({"role": "assistant", "content": error_message})
-
-        # Update chat history for this specific chat with error handling
+            logger.error(f"❌ AI response error for user {user_id}: {str(ai_error)}", exc_info=True)
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "status": "error",
+                    "detail": "AI service temporarily unavailable. Please try again in a moment.",
+                    "error_code": "AI_SERVICE_ERROR",
+                    "retry_suggested": True
+                },
+                headers={"Content-Type": "application/json"}
+            )
+        
+        # Store conversation with error handling
         try:
-            user_chats[chat_id] = chat_history
+            user_chats = request.session.get("user_chats", {})
+            session_id = request.session.get("session_id", "default")
+            
+            if session_id not in user_chats:
+                user_chats[session_id] = []
+            
+            # Add messages to history
+            user_chats[session_id].append({
+                'role': 'user',
+                'content': message,
+                'timestamp': time.time()
+            })
+            user_chats[session_id].append({
+                'role': 'assistant', 
+                'content': ai_response,
+                'timestamp': time.time()
+            })
+            
+            # Trim history to prevent memory issues in multi-user environment
+            max_history = 100  # Keep last 100 messages
+            if len(user_chats[session_id]) > max_history:
+                user_chats[session_id] = user_chats[session_id][-max_history:]
+                logger.info(f"🧹 Trimmed chat history for user {user_id}")
+            
+            # Update session
             request.session["user_chats"] = user_chats
             request.session["last_access"] = time.time()
             
-            # Update session tracker
-            if session_id:
-                session_tracker.update_session_access(session_id)
-                
-            logger.info(f"✅ Chat history updated for user {user_id} in chat {chat_id}")
-            
-        except Exception as update_error:
-            logger.error(f"❌ Error updating chat history for user {user_id}: {str(update_error)}", exc_info=True)
-            # Continue with response even if update fails - user still gets the response
-
-        # Return response with additional metadata for debugging
-        response_data = {
-            "response": chat_history[-1]["content"] if chat_history else "Sorry, I encountered an error. Please try again.",
-            "chat_history": chat_history,
-            "chat_id": chat_id,
-            "metadata": {
-                "response_generated": response_generated,
-                "message_length": len(message),
-                "chat_history_length": len(chat_history),
-                "timestamp": time.time()
-            }
-        }
+        except Exception as storage_error:
+            logger.error(f"❌ Chat storage error for user {user_id}: {str(storage_error)}", exc_info=True)
+            # Continue - don't fail the response due to storage issues
         
-        return response_data
-
-    except HTTPException:
-        # Re-raise HTTP exceptions (like 401, 429)
-        raise
+        # Calculate response time
+        response_time = time.time() - start_time
+        logger.info(f"✅ Message processed for user {user_id[:8]}... in {response_time:.2f}s")
+        
+        # Return successful response
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "success",
+                "response": ai_response,
+                "timestamp": time.time(),
+                "response_time": response_time
+            },
+            headers={"Content-Type": "application/json"}
+        )
         
     except Exception as e:
-        logger.error(f"❌ Unexpected error in send_message for user {user_id or 'unknown'}: {str(e)}", exc_info=True)
+        # Final catch-all error handler
+        response_time = time.time() - start_time
+        logger.error(f"❌ Unexpected error in send_message for user {user_id}: {str(e)}", exc_info=True)
         
-        # Try to provide more specific error information
-        if "timeout" in str(e).lower():
-            raise HTTPException(status_code=408, detail="Request timeout. Please try again.")
-        elif "connection" in str(e).lower():
-            raise HTTPException(status_code=503, detail="Service temporarily unavailable. Please try again.")
-        elif "memory" in str(e).lower() or "size" in str(e).lower():
-            raise HTTPException(status_code=413, detail="Request too large. Please try a shorter message.")
-        else:
-            raise HTTPException(status_code=500, detail="An unexpected error occurred. Please try again.")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "detail": "An unexpected error occurred. Please try again.",
+                "error_code": "UNEXPECTED_ERROR",
+                "response_time": response_time,
+                "timestamp": time.time()
+            },
+            headers={"Content-Type": "application/json"}
+        )
 
 @app.get("/chat-history")
 async def get_chat_history(request: Request):
@@ -800,34 +938,34 @@ async def send_feedback(
 
     return {"status": "success", "feedback_received": feedback, "message": message}
 
-async def get_ai_response(message: str, openai_key: str, user_id: str = "unknown") -> str:
-    """Get AI response using OpenAI API with enhanced error handling"""
+def is_kubernetes_environment():
+    """Detect if running in Kubernetes environment"""
     try:
-        logger.info(f"🤖 Calling OpenAI API for user {user_id}")
+        # Check for Kubernetes environment variables
+        k8s_indicators = [
+            'KUBERNETES_SERVICE_HOST',
+            'KUBERNETES_SERVICE_PORT',
+            'KUBERNETES_PORT',
+            'K8S_NODE_NAME',
+            'POD_NAME',
+            'POD_NAMESPACE'
+        ]
         
-        client = OpenAI(api_key=openai_key)
-
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": message}
-            ],
-            max_tokens=1000,
-            temperature=0.7
-        )
-
-        if response.choices and response.choices[0].message:
-            result = response.choices[0].message.content
-            logger.info(f"✅ OpenAI response generated for user {user_id}")
-            return result
-        else:
-            logger.warning(f"⚠️  Empty response from OpenAI for user {user_id}")
-            return "Sorry, I didn't receive a proper response. Please try again."
-
-    except Exception as e:
-        logger.error(f"❌ OpenAI API error for user {user_id}: {str(e)}", exc_info=True)
-        return "Sorry, I'm having trouble connecting to the AI service. Please try again."
+        for indicator in k8s_indicators:
+            if os.getenv(indicator):
+                return True
+        
+        # Check for Kubernetes service account
+        if os.path.exists('/var/run/secrets/kubernetes.io/serviceaccount'):
+            return True
+            
+        # Check for common container/orchestration indicators
+        if os.path.exists('/.dockerenv') or os.getenv('container'):
+            return True
+            
+        return False
+    except:
+        return False
 
 # Add endpoint for client-side error logging
 @app.post("/log-client-error")
@@ -951,6 +1089,7 @@ def check_rate_limit(user_id: str, max_requests: int = 10, window_seconds: int =
         user_requests.append(current_time)
         request_counts[user_id] = user_requests
         return True
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Roambee Chat App')

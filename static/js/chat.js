@@ -675,3 +675,388 @@ document.addEventListener('click', function(e) {
 //     const modal = document.getElementById('feedbackModal');
 //     modal.classList.remove('show');
 // });
+
+// Enhanced error handling and retry mechanism for multi-user environments
+async function sendMessage() {
+    const messageInput = document.getElementById('messageInput');
+    const message = messageInput.value.trim();
+    
+    if (!message) {
+        showNotification('Please enter a message', 'warning');
+        return;
+    }
+    
+    // Disable input and show loading
+    messageInput.disabled = true;
+    const sendButton = document.querySelector('button[onclick="sendMessage()"]');
+    const originalText = sendButton.textContent;
+    sendButton.textContent = 'Sending...';
+    sendButton.disabled = true;
+    
+    // Add user message to chat immediately
+    addMessageToChat('user', message);
+    messageInput.value = '';
+    
+    // Show typing indicator
+    const typingIndicator = addTypingIndicator();
+    
+    try {
+        const response = await sendMessageWithRetry(message, 3); // 3 retry attempts
+        
+        // Remove typing indicator
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+        
+        if (response.status === 'success') {
+            // Add AI response to chat
+            addMessageToChat('assistant', response.response);
+            
+            // Log successful interaction
+            logDetailedError('info', 'Message sent successfully', {
+                responseTime: response.response_time,
+                timestamp: response.timestamp
+            });
+        } else {
+            // Handle error response
+            handleErrorResponse(response);
+        }
+        
+    } catch (error) {
+        // Remove typing indicator
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+        
+        // Handle network or parsing errors
+        console.error('Send message error:', error);
+        
+        let errorMessage = 'Failed to send message. Please try again.';
+        let shouldRefresh = false;
+        
+        if (error.message.includes('JSON')) {
+            errorMessage = 'Server response error. Please refresh the page and try again.';
+            shouldRefresh = true;
+            logDetailedError('error', 'JSON parsing error - server returned non-JSON response', {
+                error: error.message,
+                url: window.location.href,
+                userAgent: navigator.userAgent
+            });
+        } else if (error.message.includes('Network')) {
+            errorMessage = 'Network connection error. Please check your connection and try again.';
+            logDetailedError('error', 'Network error', { error: error.message });
+        } else if (error.message.includes('timeout')) {
+            errorMessage = 'Request timed out. Please try again.';
+            logDetailedError('error', 'Request timeout', { error: error.message });
+        }
+        
+        addMessageToChat('assistant', `❌ ${errorMessage}`);
+        showNotification(errorMessage, 'error');
+        
+        if (shouldRefresh) {
+            setTimeout(() => {
+                if (confirm('The page needs to be refreshed to fix connection issues. Refresh now?')) {
+                    window.location.reload();
+                }
+            }, 2000);
+        }
+    }
+    
+    // Re-enable input
+    messageInput.disabled = false;
+    sendButton.textContent = originalText;
+    sendButton.disabled = false;
+    messageInput.focus();
+}
+
+// Enhanced retry mechanism with exponential backoff
+async function sendMessageWithRetry(message, maxRetries = 3) {
+    let lastError;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            logDetailedError('info', `Sending message attempt ${attempt}/${maxRetries}`, {
+                messageLength: message.length,
+                attempt: attempt
+            });
+            
+            const formData = new FormData();
+            formData.append('message', message);
+            
+            const response = await fetch('/send-message', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include', // Include cookies for session
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest' // Identify as AJAX request
+                }
+            });
+            
+            // Check if response is ok
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            // Check content type
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                // Server returned non-JSON (likely HTML error page)
+                const text = await response.text();
+                console.error('Non-JSON response:', text.substring(0, 200));
+                throw new Error(`Server returned non-JSON response: ${contentType}`);
+            }
+            
+            const data = await response.json();
+            
+            // Handle specific error codes that require refresh
+            if (data.requires_refresh) {
+                logDetailedError('warning', 'Session expired, refresh required', data);
+                setTimeout(() => {
+                    if (confirm('Your session has expired. Please refresh the page to continue.')) {
+                        window.location.reload();
+                    }
+                }, 1000);
+                throw new Error('Session expired');
+            }
+            
+            // Handle rate limiting
+            if (response.status === 429) {
+                const retryAfter = data.retry_after || 60;
+                logDetailedError('warning', 'Rate limited', { retryAfter, attempt });
+                
+                if (attempt < maxRetries) {
+                    showNotification(`Rate limited. Retrying in ${retryAfter} seconds...`, 'warning');
+                    await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+                    continue;
+                }
+            }
+            
+            return data;
+            
+        } catch (error) {
+            lastError = error;
+            console.error(`Attempt ${attempt} failed:`, error);
+            
+            logDetailedError('error', `Send message attempt ${attempt} failed`, {
+                error: error.message,
+                attempt: attempt,
+                maxRetries: maxRetries
+            });
+            
+            // Don't retry on certain errors
+            if (error.message.includes('Session expired') || 
+                error.message.includes('requires_refresh')) {
+                throw error;
+            }
+            
+            // Exponential backoff for retries
+            if (attempt < maxRetries) {
+                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000); // Max 10 seconds
+                console.log(`Retrying in ${delay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+    }
+    
+    // All retries failed
+    throw lastError || new Error('All retry attempts failed');
+}
+
+// Handle error responses from server
+function handleErrorResponse(response) {
+    let message = response.detail || 'An error occurred';
+    let type = 'error';
+    
+    // Handle specific error codes
+    switch (response.error_code) {
+        case 'RATE_LIMIT_EXCEEDED':
+            message = 'Too many requests. Please wait a moment before sending another message.';
+            type = 'warning';
+            break;
+        case 'MESSAGE_TOO_LONG':
+            message = 'Your message is too long. Please make it shorter.';
+            type = 'warning';
+            break;
+        case 'EMPTY_MESSAGE':
+            message = 'Please enter a message.';
+            type = 'warning';
+            break;
+        case 'AI_SERVICE_ERROR':
+            message = 'AI service is temporarily unavailable. Please try again in a moment.';
+            if (response.retry_suggested) {
+                setTimeout(() => {
+                    showNotification('You can try sending your message again now.', 'info');
+                }, 30000); // Suggest retry after 30 seconds
+            }
+            break;
+        case 'SESSION_VALIDATION_ERROR':
+        case 'INVALID_SESSION':
+        case 'NO_SESSION':
+            message = 'Your session has expired. Please refresh the page.';
+            setTimeout(() => {
+                if (confirm('Your session has expired. Refresh the page now?')) {
+                    window.location.reload();
+                }
+            }, 2000);
+            break;
+    }
+    
+    addMessageToChat('assistant', `❌ ${message}`);
+    showNotification(message, type);
+    
+    // Log the error
+    logDetailedError('error', 'Server error response', response);
+}
+
+// Enhanced error logging with more context
+function logDetailedError(level, message, context = {}) {
+    const errorData = {
+        level: level,
+        message: message,
+        timestamp: new Date().toISOString(),
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        sessionId: document.cookie.match(/session_id=([^;]+)/)?.[1] || 'none',
+        context: context,
+        stackTrace: level === 'error' ? new Error().stack : null
+    };
+    
+    console.log(`[${level.toUpperCase()}] ${message}`, errorData);
+    
+    // Send to server for logging (don't wait for response)
+    fetch('/log-client-error', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(errorData),
+        credentials: 'include'
+    }).catch(err => {
+        console.warn('Failed to log error to server:', err);
+    });
+}
+
+// Add typing indicator
+function addTypingIndicator() {
+    const chatMessages = document.getElementById('chatMessages');
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'message assistant-message typing-indicator';
+    typingDiv.innerHTML = `
+        <div class="message-content">
+            <div class="typing-animation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <span class="typing-text">AI is thinking...</span>
+        </div>
+    `;
+    chatMessages.appendChild(typingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return typingDiv;
+}
+
+// Enhanced notification system
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.notification');
+    existingNotifications.forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    // Style the notification
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 6px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        max-width: 400px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    // Set background color based on type
+    const colors = {
+        'info': '#3498db',
+        'success': '#2ecc71',
+        'warning': '#f39c12',
+        'error': '#e74c3c'
+    };
+    notification.style.backgroundColor = colors[type] || colors.info;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after delay
+    const delay = type === 'error' ? 8000 : 4000;
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.animation = 'slideOut 0.3s ease-in forwards';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, delay);
+}
+
+// Add CSS for animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+    
+    .typing-indicator .typing-animation {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-right: 8px;
+    }
+    
+    .typing-indicator .typing-animation span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #666;
+        animation: typing 1.4s infinite ease-in-out;
+    }
+    
+    .typing-indicator .typing-animation span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-indicator .typing-animation span:nth-child(2) { animation-delay: -0.16s; }
+    
+    @keyframes typing {
+        0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+        40% { transform: scale(1); opacity: 1; }
+    }
+    
+    .typing-text {
+        color: #666;
+        font-style: italic;
+    }
+`;
+document.head.appendChild(style);
+
+// Periodic session validation
+setInterval(async () => {
+    try {
+        const response = await fetch('/session-info', {
+            credentials: 'include'
+        });
+        
+        if (!response.ok || response.status === 401) {
+            logDetailedError('warning', 'Session validation failed during periodic check');
+            showNotification('Your session has expired. Please refresh the page.', 'warning');
+        }
+    } catch (error) {
+        console.warn('Session validation check failed:', error);
+    }
+}, 30000); // Check every 30 seconds
