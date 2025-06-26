@@ -796,7 +796,7 @@ async def send_message(
             content={
                 "status": "success",
                 "response": ai_response,
-                "timestamp": time.time()
+                "timestamp": time.time(),
                 "response_time": response_time
             },
             headers={"Content-Type": "application/json"}
@@ -999,7 +999,7 @@ async def log_client_error(request: Request):
 # Add comprehensive error monitoring
 @app.get("/health-check")
 async def health_check():
-    """Health check endpoint with system status"""
+    """Health check endpoint with system status."""
     try:
         current_time = time.time()
         uptime = current_time - server_start_time
